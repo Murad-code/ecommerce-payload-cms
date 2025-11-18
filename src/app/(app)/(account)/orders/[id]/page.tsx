@@ -98,7 +98,7 @@ export default async function Order({ params, searchParams }: PageProps) {
       order = orderResult
     }
   } catch (error) {
-    console.error(error)
+    // Silently handle error - will show notFound() below
   }
 
   if (!order) {

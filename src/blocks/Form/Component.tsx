@@ -112,7 +112,6 @@ export const FormBlock: React.FC<
             if (redirectUrl) router.push(redirectUrl)
           }
         } catch (err) {
-          console.warn(err)
           setIsLoading(false)
           setError({
             message: 'Something went wrong.',
@@ -143,7 +142,7 @@ export const FormBlock: React.FC<
                 {formFromProps &&
                   formFromProps.fields &&
                   formFromProps.fields?.map((field, index) => {
-                    const Field: React.FC<any> | undefined =
+                    const Field: React.FC<Record<string, unknown>> | undefined =
                       fields?.[field.blockType as keyof typeof fields]
 
                     if (Field) {
