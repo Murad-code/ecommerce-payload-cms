@@ -23,7 +23,9 @@
   },
   "dependencies": {
     "@payloadcms/admin-bar": "3.64.0",
+    "@payloadcms/db-postgres": "3.64.0",
     "@payloadcms/email-nodemailer": "3.64.0",
+    "@payloadcms/email-resend": "^3.64.0",
     "@payloadcms/live-preview-react": "3.64.0",
     "@payloadcms/next": "3.64.0",
     "@payloadcms/plugin-ecommerce": "3.64.0",
@@ -63,8 +65,7 @@
     "sonner": "^1.7.2",
     "stripe": "18.5.0",
     "tailwind-merge": "^2.3.0",
-    "tailwindcss-animate": "^1.0.7",
-    "@payloadcms/db-postgres": "3.64.0"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

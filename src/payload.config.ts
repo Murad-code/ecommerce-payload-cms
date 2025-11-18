@@ -1,5 +1,6 @@
 // storage-adapter-import-placeholder
 import { postgresAdapter } from '@payloadcms/db-postgres'
+import { resendAdapter } from '@payloadcms/email-resend'
 
 import {
   BoldFeature,
@@ -18,6 +19,7 @@ import { fileURLToPath } from 'url'
 
 import { Categories } from '@/collections/Categories'
 import { Media } from '@/collections/Media'
+import { sendOrderConfirmationEmail } from '@/collections/Orders/hooks/sendOrderConfirmationEmail'
 import { Pages } from '@/collections/Pages'
 import { Users } from '@/collections/Users'
 import { Footer } from '@/globals/Footer'
@@ -80,7 +82,11 @@ export default buildConfig({
       ]
     },
   }),
-  //email: nodemailerAdapter(),
+  email: resendAdapter({
+    defaultFromAddress: process.env.EMAIL_FROM_ADDRESS || 'noreply@example.com',
+    defaultFromName: process.env.EMAIL_FROM_NAME || 'Payload Ecommerce',
+    apiKey: process.env.RESEND_API_KEY || '',
+  }),
   endpoints: [],
   globals: [Header, Footer],
   plugins: [
@@ -90,6 +96,22 @@ export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
+  },
+  onInit: async (payload) => {
+    // Add hook to send order confirmation emails
+    const ordersCollection = payload.collections['orders']
+    if (ordersCollection) {
+      payload.logger.info('Adding order confirmation email hook to orders collection')
+      const existingHooks = ordersCollection.config.hooks || {}
+      const existingAfterChange = existingHooks.afterChange || []
+      ordersCollection.config.hooks = {
+        ...existingHooks,
+        afterChange: [...existingAfterChange, sendOrderConfirmationEmail],
+      }
+      payload.logger.info('Order confirmation email hook added successfully')
+    } else {
+      payload.logger.warn('Orders collection not found - email hook not added')
+    }
   },
   // Sharp is now an optional dependency -
   // if you want to resize images, crop, set focal point, etc.
