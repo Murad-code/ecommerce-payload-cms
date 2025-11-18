@@ -1,364 +1,517 @@
 # Payload Ecommerce Template
 
-This template is in **BETA**.
+This is a production-ready ecommerce template built with [Payload CMS](https://payloadcms.com) and [Next.js](https://nextjs.org). This template includes a fully-working backend, enterprise-grade admin panel, and a beautifully designed frontend website.
 
-This is the official [Payload Ecommerce Template](https://github.com/payloadcms/payload/blob/main/templates/ecommerce). This repo includes a fully-working backend, enterprise-grade admin panel, and a beautifully designed, production-ready ecommerce website.
+## Table of Contents
 
-This template is right for you if you are working on building an ecommerce project or shop with Payload.
-
-Core features:
-
-- [Pre-configured Payload Config](#how-it-works)
-- [Authentication](#users-authentication)
-- [Access Control](#access-control)
-- [Layout Builder](#layout-builder)
-- [Draft Preview](#draft-preview)
-- [Live Preview](#live-preview)
-- [On-demand Revalidation](#on-demand-revalidation)
-- [SEO](#seo)
-- [Search & Filters](#search)
-- [Jobs and Scheduled Publishing](#jobs-and-scheduled-publish)
-- [Website](#website)
-- [Products & Variants](#products-and-variants)
-- [User accounts](#user-accounts)
-- [Carts](#carts)
-- [Guest checkout](#guests)
-- [Orders & Transactions](#orders-and-transactions)
-- [Stripe Payments](#stripe)
-- [Currencies](#currencies)
-- [Automated Tests](#tests)
+- [Quick Start](#quick-start)
+- [Environment Variables](#environment-variables)
+- [Initial Setup](#initial-setup)
+- [Important Configuration Notes](#important-configuration-notes)
+- [Stripe Payment Setup](#stripe-payment-setup)
+- [Email Configuration](#email-configuration)
+- [Database Setup](#database-setup)
+- [Creating Your First Content](#creating-your-first-content)
+- [Development](#development)
+- [Production](#production)
+- [Features](#features)
 
 ## Quick Start
 
-To spin up this example locally, follow these steps:
+### Prerequisites
 
-### Clone
+- Node.js 18.20.2+ or 20.9.0+
+- pnpm (recommended) or npm
+- PostgreSQL database (for production) or use the default MongoDB adapter for development
+- Stripe account (for payments)
+- Resend account (for emails)
 
-If you have not done so already, you need to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+### Installation
 
-Use the `create-payload-app` CLI to clone this template directly to your machine:
+1. **Clone the repository:**
+   ```bash
+   git clone <your-repo-url>
+   cd ecommerce
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   pnpm install
+   ```
+
+3. **Set up environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
+   Then edit `.env` with your configuration (see [Environment Variables](#environment-variables) below).
+
+4. **Start the development server:**
+   ```bash
+   pnpm dev
+   ```
+
+5. **Open your browser:**
+   - Frontend: `http://localhost:3000`
+   - Admin Panel: `http://localhost:3000/admin`
+
+6. **Create your first admin user:**
+   - Navigate to `http://localhost:3000/admin`
+   - Follow the on-screen instructions to create your first admin user
+
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+### Required Variables
 
 ```bash
-pnpx create-payload-app my-project -t ecommerce
+# Payload Configuration
+PAYLOAD_SECRET=your-super-secret-key-here-min-32-characters
+NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+
+# Database
+DATABASE_URI=postgresql://user:password@localhost:5432/ecommerce
+
+# Stripe (Required for payments)
+STRIPE_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOKS_SIGNING_SECRET=whsec_...
+
+# Email (Required for order confirmations)
+RESEND_API_KEY=re_...
+EMAIL_FROM_ADDRESS=noreply@yourdomain.com
+EMAIL_FROM_NAME=Your Store Name
 ```
 
-### Development
-
-1. First [clone the repo](#clone) if you have not done so already
-1. `cd my-project && cp .env.example .env` to copy the example environment variables
-1. `pnpm install && pnpm dev` to install dependencies and start the dev server
-1. open `http://localhost:3000` to open the app in your browser
-
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
-
-## How it works
-
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
-
-### Collections
-
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
-
-- #### Users (Authentication)
-
-  Users are auth-enabled collections that have access to the admin panel and unpublished content. See [Access Control](#access-control) for more details.
-
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/main/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
-
-- #### Pages
-
-  All pages are layout builder enabled so you can generate unique layouts for each page using layout-building blocks, see [Layout Builder](#layout-builder) for more details. Pages are also draft-enabled so you can preview them before publishing them to your website, see [Draft Preview](#draft-preview) for more details.
-
-- #### Media
-
-  This is the uploads enabled collection used by pages, posts, and projects to contain media like images, videos, downloads, and other assets. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
-
-- #### Categories
-
-  A taxonomy used to group products together.
-
-- ### Carts
-
-  Used to track user and guest carts within Payload. Added by the [ecommerce plugin](https://payloadcms.com/docs/ecommerce/plugin#carts).
-
-- ### Addresses
-
-  Saves user's addresses for easier checkout. Added by the [ecommerce plugin](https://payloadcms.com/docs/ecommerce/plugin#addresses).
-
-- ### Orders
-
-  Tracks orders once a transaction successfully completes. Added by the [ecommerce plugin](https://payloadcms.com/docs/ecommerce/plugin#orders).
-
-- ### Transactions
-
-  Tracks transactions from initiation to completion, once completed they will have a related Order item. Added by the [ecommerce plugin](https://payloadcms.com/docs/ecommerce/plugin#transactions).
-
-- ### Products and Variants
-
-  Primary collections for product details such as pricing per currency and optionally supports variants per product. Added by the [ecommerce plugin](https://payloadcms.com/docs/ecommerce/plugin#products).
-
-### Globals
-
-See the [Globals](https://payloadcms.com/docs/configuration/globals) docs for details on how to extend this functionality.
-
-- `Header`
-
-  The data required by the header on your front-end like nav links.
-
-- `Footer`
-
-  Same as above but for the footer of your site.
-
-## Access control
-
-Basic access control is setup to limit access to various content based based on publishing status.
-
-- `users`: Users with the `admin` role can access the admin panel and create or edit content, users with the `customer` role can only access the frontend and the relevant collection items to themselves.
-- `pages`: Everyone can access published pages, but only admin users can create, update, or delete them.
-- `products` `variants`: Everyone can access published products, but only admin users can create, update, or delete them.
-- `carts`: Customers can access their own saved cart, guest users can access any unclaimed cart by ID.
-- `addresses`: Customers can access their own addresses for record keeping.
-- `transactions`: Only admins can access these as they're meant for internal tracking.
-- `orders`: Only admins and users who own the orders can access these.
-
-For more details on how to extend this functionality, see the [Payload Access Control](https://payloadcms.com/docs/access-control/overview#access-control) docs.
-
-## User accounts
-
-## Guests
-
-## Layout Builder
-
-Create unique page layouts for any type of content using a powerful layout builder. This template comes pre-configured with the following layout building blocks:
-
-- Hero
-- Content
-- Media
-- Call To Action
-- Archive
-
-Each block is fully designed and built into the front-end website that comes with this template. See [Website](#website) for more details.
-
-## Lexical editor
-
-A deep editorial experience that allows complete freedom to focus just on writing content without breaking out of the flow with support for Payload blocks, media, links and other features provided out of the box. See [Lexical](https://payloadcms.com/docs/rich-text/overview) docs.
-
-## Draft Preview
-
-All products and pages are draft-enabled so you can preview them before publishing them to your website. To do this, these collections use [Versions](https://payloadcms.com/docs/configuration/collections#versions) with `drafts` set to `true`. This means that when you create a new product or page, it will be saved as a draft and will not be visible on your website until you publish it. This also means that you can preview your draft before publishing it to your website. To do this, we automatically format a custom URL which redirects to your front-end to securely fetch the draft version of your content.
-
-Since the front-end of this template is statically generated, this also means that pages, products, and projects will need to be regenerated as changes are made to published documents. To do this, we use an `afterChange` hook to regenerate the front-end when a document has changed and its `_status` is `published`.
-
-For more details on how to extend this functionality, see the official [Draft Preview Example](https://github.com/payloadcms/payload/tree/examples/draft-preview).
-
-## Live preview
-
-In addition to draft previews you can also enable live preview to view your end resulting page as you're editing content with full support for SSR rendering. See [Live preview docs](https://payloadcms.com/docs/live-preview/overview) for more details.
-
-## On-demand Revalidation
-
-We've added hooks to collections and globals so that all of your pages, products, footer, or header changes will automatically be updated in the frontend via on-demand revalidation supported by Nextjs.
-
-> Note: if an image has been changed, for example it's been cropped, you will need to republish the page it's used on in order to be able to revalidate the Nextjs image cache.
-
-## SEO
-
-This template comes pre-configured with the official [Payload SEO Plugin](https://payloadcms.com/docs/plugins/seo) for complete SEO control from the admin panel. All SEO data is fully integrated into the front-end website that comes with this template. See [Website](#website) for more details.
-
-## Search
-
-This template comes with SSR search features can easily be implemented into Next.js with Payload. See [Website](#website) for more details.
-
-## Orders and Transactions
-
-Transactions are intended for keeping a record of any payment made, as such it will contain information regarding an order or billing address used or the payment method used and amount. Only admins can access transactions.
-
-An order is created only once a transaction is successfully completed. This is a record that the user who completed the transaction has access so they can keep track of their history. Guests can also access their own orders by providing an order ID and the email associated with that order.
-
-## Currencies
-
-By default the template ships with support only for USD however you can change the supported currencies via the [plugin configuration](https://payloadcms.com/docs/ecommerce/plugin#currencies). You will need to ensure that the supported currencies in Payload are also configured in your Payment platforms.
-
-## Stripe
-
-By default we ship with the Stripe adapter configured, so you'll need to setup the `secretKey`, `publishableKey` and `webhookSecret` from your Stripe dashboard. Follow [Stripe's guide](https://docs.stripe.com/get-started/api-request?locale=en-GB) on how to set this up.
-
-## Tests
-
-We provide automated tests out of the box for both E2E and Int tests along with this template. They are being run in our CI to ensure the stability of this template over time. You can integrate them into your CI or run them locally as well via:
-
-To run Int tests wtih Vitest:
+### Optional Variables
 
 ```bash
-pnpm test:int
+# Node Environment
+NODE_ENV=development
 ```
 
-To run E2Es with Playwright:
+### Generating Secrets
 
-```bash
-pnpm test:e2e
-```
+- **PAYLOAD_SECRET**: Generate a random 32+ character string. You can use:
+  ```bash
+  openssl rand -base64 32
+  ```
 
-or
+## Initial Setup
 
-```bash
-pnpm test
-```
+### 1. Database Setup
 
-To run both.
+This template uses PostgreSQL by default. Make sure you have PostgreSQL installed and running.
 
-## Jobs and Scheduled Publish
+**Local Development:**
+- Install PostgreSQL locally or use Docker
+- Create a new database:
+  ```sql
+  CREATE DATABASE ecommerce;
+  ```
+- Update `DATABASE_URI` in your `.env` file
 
-We have configured [Scheduled Publish](https://payloadcms.com/docs/versions/drafts#scheduled-publish) which uses the [jobs queue](https://payloadcms.com/docs/jobs-queue/jobs) in order to publish or unpublish your content on a scheduled time. The tasks are run on a cron schedule and can also be run as a separate instance if needed.
+**Production:**
+- Use a managed PostgreSQL service (AWS RDS, DigitalOcean, etc.)
+- Update `DATABASE_URI` with your production database connection string
 
-> Note: When deployed on Vercel, depending on the plan tier, you may be limited to daily cron only.
+### 2. Stripe Setup
 
-## Website
+See [Stripe Payment Setup](#stripe-payment-setup) section below.
 
-This template includes a beautifully designed, production-ready front-end built with the [Next.js App Router](https://nextjs.org), served right alongside your Payload app in a instance. This makes it so that you can deploy both your backend and website where you need it.
+### 3. Email Setup
 
-Core features:
+See [Email Configuration](#email-configuration) section below.
 
-- [Next.js App Router](https://nextjs.org)
-- [TypeScript](https://www.typescriptlang.org)
-- [React Hook Form](https://react-hook-form.com)
-- [Payload Admin Bar](https://github.com/payloadcms/payload/tree/main/packages/admin-bar)
-- [TailwindCSS styling](https://tailwindcss.com/)
-- [shadcn/ui components](https://ui.shadcn.com/)
-- User Accounts and Authentication
-- Fully featured blog
-- Publication workflow
-- Dark mode
-- Pre-made layout building blocks
-- SEO
-- Search
-- Live preview
-- Stripe payments
+### 4. Run Migrations (PostgreSQL only)
 
-### Cache
-
-Although Next.js includes a robust set of caching strategies out of the box, Payload Cloud proxies and caches all files through Cloudflare using the [Official Cloud Plugin](https://www.npmjs.com/package/@payloadcms/payload-cloud). This means that Next.js caching is not needed and is disabled by default. If you are hosting your app outside of Payload Cloud, you can easily reenable the Next.js caching mechanisms by removing the `no-store` directive from all fetch requests in `./src/app/_api` and then removing all instances of `export const dynamic = 'force-dynamic'` from pages files, such as `./src/app/(pages)/[slug]/page.tsx`. For more details, see the official [Next.js Caching Docs](https://nextjs.org/docs/app/building-your-application/caching).
-
-## Development
-
-To spin up this example locally, follow the [Quick Start](#quick-start). Then [Seed](#seed) the database with a few pages, posts, and projects.
-
-### Working with Postgres
-
-Postgres and other SQL-based databases follow a strict schema for managing your data. In comparison to our MongoDB adapter, this means that there's a few extra steps to working with Postgres.
-
-Note that often times when making big schema changes you can run the risk of losing data if you're not manually migrating it.
-
-#### Local development
-
-Ideally we recommend running a local copy of your database so that schema updates are as fast as possible. By default the Postgres adapter has `push: true` for development environments. This will let you add, modify and remove fields and collections without needing to run any data migrations.
-
-If your database is pointed to production you will want to set `push: false` otherwise you will risk losing data or having your migrations out of sync.
-
-#### Migrations
-
-[Migrations](https://payloadcms.com/docs/database/migrations) are essentially SQL code versions that keeps track of your schema. When deploy with Postgres you will need to make sure you create and then run your migrations.
-
-Locally create a migration
-
-```bash
-pnpm payload migrate:create
-```
-
-This creates the migration files you will need to push alongside with your new configuration.
-
-On the server after building and before running `pnpm start` you will want to run your migrations
+If you're using PostgreSQL, run migrations to set up the database schema:
 
 ```bash
 pnpm payload migrate
 ```
 
-This command will check for any migrations that have not yet been run and try to run them and it will keep a record of migrations that have been run in the database.
+## Important Configuration Notes
 
-### Docker
+### Home Page Slug
 
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
+**⚠️ Important:** The page with the slug `home` will be used as the default homepage (`/`).
 
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
+- When you create a page in the admin panel, if you set the slug to `home`, it will automatically be served at the root URL (`/`)
+- If no page with slug `home` exists, the root route will return a 404
+- Make sure to create a page with slug `home` as your first page
 
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+### Currency Configuration
 
-### Seed
+This template is configured to use **GBP (British Pounds)** by default. The currency configuration is set in two places:
 
-To seed the database with a few pages, products, and orders you can click the 'seed database' link from the admin panel.
+1. **Backend** (`src/plugins/index.ts`):
+   ```typescript
+   currencies: {
+     defaultCurrency: 'GBP',
+     supportedCurrencies: [
+       {
+         code: 'GBP',
+         symbol: '£',
+         decimals: 2,
+         label: 'British Pound',
+       },
+     ],
+   }
+   ```
 
-The seed script will also create a demo user for demonstration purposes only:
+2. **Frontend** (`src/providers/index.tsx`):
+   ```typescript
+   currenciesConfig: {
+     defaultCurrency: 'GBP',
+     supportedCurrencies: [
+       {
+         code: 'GBP',
+         symbol: '£',
+         decimals: 2,
+         label: 'British Pound',
+       },
+     ],
+   }
+   ```
 
-- Demo Customer
-  - Email: `customer@example.com`
-  - Password: `password`
+**To change currencies:** You must update both locations to match. Also ensure your payment provider (Stripe) supports the currencies you want to use.
 
-> NOTICE: seeding the database is destructive because it drops your current database to populate a fresh one from the seed template. Only run this command if you are starting a new project or can afford to lose your current data.
+### Guest Checkout
+
+Guest checkout is enabled by default. Users can:
+- Add items to cart without logging in
+- Complete checkout with just an email address
+- View their orders using order ID and email
+
+### Access Control
+
+- **Admin users**: Full access to admin panel and all content
+- **Customer users**: Can access their own orders, addresses, and carts
+- **Guest users**: Can checkout and view orders by email/order ID
+- **Public**: Can view published pages and products
+
+## Stripe Payment Setup
+
+### 1. Create a Stripe Account
+
+1. Go to [Stripe Dashboard](https://dashboard.stripe.com)
+2. Sign up or log in to your account
+3. Complete your account setup
+
+### 2. Get Your API Keys
+
+1. Navigate to [API Keys](https://dashboard.stripe.com/test/apikeys) in your Stripe dashboard
+2. Copy your **Secret Key** (starts with `sk_test_` for test mode)
+3. Copy your **Publishable Key** (starts with `pk_test_` for test mode)
+4. Add them to your `.env` file:
+   ```bash
+   STRIPE_SECRET_KEY=sk_test_...
+   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+   ```
+
+### 3. Set Up Webhooks
+
+Webhooks are required for payment confirmation:
+
+1. Install Stripe CLI (for local development):
+   ```bash
+   brew install stripe/stripe-cli/stripe  # macOS
+   # or visit https://stripe.com/docs/stripe-cli
+   ```
+
+2. Login to Stripe CLI:
+   ```bash
+   stripe login
+   ```
+
+3. Forward webhooks to your local server:
+   ```bash
+   pnpm stripe-webhooks
+   # This runs: stripe listen --forward-to localhost:3000/api/stripe/webhooks
+   ```
+
+4. Copy the webhook signing secret (starts with `whsec_`) and add to `.env`:
+   ```bash
+   STRIPE_WEBHOOKS_SIGNING_SECRET=whsec_...
+   ```
+
+**For Production:**
+1. Go to [Webhooks](https://dashboard.stripe.com/webhooks) in Stripe dashboard
+2. Click "Add endpoint"
+3. Set endpoint URL to: `https://yourdomain.com/api/stripe/webhooks`
+4. Select events: `payment_intent.succeeded`, `payment_intent.payment_failed`
+5. Copy the signing secret and add to your production `.env`
+
+### 4. Test Payments
+
+Use Stripe's test card numbers:
+- **Success**: `4242 4242 4242 4242`
+- **Decline**: `4000 0000 0000 0002`
+- Use any future expiry date and any 3-digit CVC
+
+## Email Configuration
+
+This template uses [Resend](https://resend.com) for sending emails (order confirmations, etc.).
+
+### 1. Create a Resend Account
+
+1. Go to [Resend](https://resend.com) and sign up
+2. Verify your email address
+
+### 2. Get Your API Key
+
+1. Navigate to [API Keys](https://resend.com/api-keys) in Resend dashboard
+2. Create a new API key
+3. Copy the API key (starts with `re_`)
+4. Add to your `.env` file:
+   ```bash
+   RESEND_API_KEY=re_...
+   ```
+
+### 3. Configure Sender Email
+
+1. In Resend dashboard, go to [Domains](https://resend.com/domains)
+2. Add and verify your domain (or use Resend's test domain for development)
+3. Set your sender email in `.env`:
+   ```bash
+   EMAIL_FROM_ADDRESS=noreply@yourdomain.com
+   EMAIL_FROM_NAME=Your Store Name
+   ```
+
+**Note:** For development, you can use Resend's test domain, but emails may go to spam. For production, always use your own verified domain.
+
+## Database Setup
+
+### PostgreSQL (Recommended for Production)
+
+1. **Create the database:**
+   ```sql
+   CREATE DATABASE ecommerce;
+   ```
+
+2. **Update `.env`:**
+   ```bash
+   DATABASE_URI=postgresql://user:password@localhost:5432/ecommerce
+   ```
+
+3. **Run migrations:**
+   ```bash
+   pnpm payload migrate
+   ```
+
+### Local Development with Auto-Push
+
+For local development, the Postgres adapter has `push: true` enabled, which automatically updates your schema when you make changes. This is convenient but should **never** be used in production.
+
+**⚠️ Warning:** If your database is pointed to production, set `push: false` in your database adapter configuration to prevent accidental data loss.
+
+### Creating Migrations
+
+When you make schema changes:
+
+1. **Create a migration:**
+   ```bash
+   pnpm payload migrate:create
+   ```
+
+2. **Review the generated migration file** in `src/migrations/`
+
+3. **Run migrations:**
+   ```bash
+   pnpm payload migrate
+   ```
+
+## Creating Your First Content
+
+### 1. Create the Home Page
+
+1. Go to `http://localhost:3000/admin`
+2. Navigate to **Pages** collection
+3. Click **Create New**
+4. **Important:** Set the slug to `home` (this will be your homepage)
+5. Add a title, hero section, and layout blocks
+6. Click **Save** and then **Publish**
+
+### 2. Configure Header and Footer
+
+1. Go to **Globals** → **Header**
+2. Add navigation items
+3. Go to **Globals** → **Footer**
+4. Configure footer content
+5. Click **Save**
+
+### 3. Create Categories
+
+1. Go to **Categories** collection
+2. Create categories for your products (e.g., "T-Shirts", "Hats", "Accessories")
+3. These will be used to organize products
+
+### 4. Create Products
+
+1. Go to **Products** collection
+2. Click **Create New**
+3. Fill in:
+   - Title
+   - Slug (URL-friendly version)
+   - Description
+   - Price (in GBP)
+   - Inventory quantity
+   - Categories
+   - Gallery images
+4. Click **Save** and **Publish**
+
+### 5. Test the Checkout Flow
+
+1. Visit your homepage: `http://localhost:3000`
+2. Browse products
+3. Add items to cart
+4. Go to checkout
+5. Use a test Stripe card: `4242 4242 4242 4242`
+6. Complete the order
+7. Check that you receive an order confirmation email
+
+## Development
+
+### Available Scripts
+
+```bash
+# Start development server
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Start production server
+pnpm start
+
+# Generate TypeScript types
+pnpm generate:types
+
+# Run linting
+pnpm lint
+
+# Fix linting issues
+pnpm lint:fix
+
+# Run tests
+pnpm test
+
+# Run integration tests only
+pnpm test:int
+
+# Run E2E tests only
+pnpm test:e2e
+```
+
+### Development Tips
+
+1. **Type Generation**: After making schema changes, run `pnpm generate:types` to update TypeScript types
+2. **Hot Reload**: The dev server supports hot reload for both frontend and backend changes
+3. **Admin Panel**: Changes to collections, fields, and globals are reflected immediately in the admin panel
+4. **Database**: Use `push: true` in development for automatic schema updates (never in production!)
 
 ## Production
 
-To run Payload in production, you need to build and start the Admin panel. To do so, follow these steps:
+### Building for Production
 
-1. Invoke the `next build` script by running `pnpm build` or `npm run build` in your project root. This creates a `.next` directory with a production-ready admin bundle.
-1. Finally run `pnpm start` or `npm run start` to run Node in production and serve Payload from the `.build` directory.
-1. When you're ready to go live, see Deployment below for more details.
+1. **Set production environment variables:**
+   - Update `NEXT_PUBLIC_SERVER_URL` to your production URL
+   - Use production Stripe keys
+   - Use production database connection string
+   - Use production Resend API key
 
-### Deploying to Vercel
+2. **Build the application:**
+   ```bash
+   pnpm build
+   ```
 
-This template can also be deployed to Vercel for free. You can get started by choosing the Vercel DB adapter during the setup of the template or by manually installing and configuring it:
+3. **Run migrations** (if using PostgreSQL):
+   ```bash
+   pnpm payload migrate
+   ```
 
-```bash
-pnpm add @payloadcms/db-vercel-postgres
-```
+4. **Start the server:**
+   ```bash
+   pnpm start
+   ```
 
-```ts
-// payload.config.ts
-import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
+### Deployment Considerations
 
-export default buildConfig({
-  // ...
-  db: vercelPostgresAdapter({
-    pool: {
-      connectionString: process.env.POSTGRES_URL || '',
-    },
-  }),
-  // ...
-```
+- **Database**: Use a managed PostgreSQL service (AWS RDS, DigitalOcean, etc.)
+- **File Storage**: Configure a storage adapter for media files (S3, Cloudflare R2, etc.)
+- **Environment Variables**: Set all required variables in your hosting platform
+- **Webhooks**: Configure Stripe webhooks to point to your production URL
+- **Email**: Verify your domain in Resend for production email delivery
 
-We also support Vercel's blob storage:
+## Features
 
-```bash
-pnpm add @payloadcms/storage-vercel-blob
-```
+### Core Features
 
-```ts
-// payload.config.ts
-import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
+- ✅ **Authentication**: User accounts with admin and customer roles
+- ✅ **Products & Variants**: Full product management with variant support
+- ✅ **Shopping Cart**: Persistent carts for logged-in users and guests
+- ✅ **Checkout**: Guest and authenticated checkout flows
+- ✅ **Payments**: Stripe integration for secure payments
+- ✅ **Orders**: Complete order management and tracking
+- ✅ **Email Notifications**: Automated order confirmation emails
+- ✅ **Layout Builder**: Flexible page layouts with blocks
+- ✅ **SEO**: Built-in SEO optimization
+- ✅ **Draft Preview**: Preview content before publishing
+- ✅ **Media Management**: Image upload and management
+- ✅ **Search**: Product search functionality
+- ✅ **Categories**: Product categorization
+- ✅ **Addresses**: Saved shipping addresses for customers
 
-export default buildConfig({
-  // ...
-  plugins: [
-    vercelBlobStorage({
-      collections: {
-        [Media.slug]: true,
-      },
-      token: process.env.BLOB_READ_WRITE_TOKEN || '',
-    }),
-  ],
-  // ...
-```
+### Collections
 
-### Self-hosting
+- **Users**: Admin and customer user accounts
+- **Pages**: Content pages with layout builder
+- **Products**: Ecommerce products with variants
+- **Categories**: Product categories
+- **Media**: Image and file uploads
+- **Carts**: Shopping cart management
+- **Orders**: Order records
+- **Transactions**: Payment transaction records
+- **Addresses**: Customer shipping addresses
 
-Before deploying your app, you need to:
+### Globals
 
-1. Ensure your app builds and serves in production. See [Production](#production) for more details.
-2. You can then deploy Payload as you would any other Node.js or Next.js application either directly on a VPS, DigitalOcean's Apps Platform, via Coolify or more. More guides coming soon.
+- **Header**: Site navigation and header configuration
+- **Footer**: Footer content and links
 
-You can also deploy your app manually, check out the [deployment documentation](https://payloadcms.com/docs/production/deployment) for full details.
+## Troubleshooting
 
-## Questions
+### Common Issues
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+1. **"Email adapter is not configured"**
+   - Make sure `RESEND_API_KEY` is set in your `.env` file
+   - Verify the API key is correct in Resend dashboard
+
+2. **"Payment failed" or Stripe errors**
+   - Verify all Stripe keys are set correctly
+   - Check that webhooks are configured
+   - Ensure you're using test keys in development
+
+3. **Database connection errors**
+   - Verify `DATABASE_URI` is correct
+   - Check that PostgreSQL is running
+   - Ensure database exists and user has permissions
+
+4. **Homepage returns 404**
+   - Create a page with slug `home` in the admin panel
+   - Make sure the page is published
+
+5. **Types are out of date**
+   - Run `pnpm generate:types` after schema changes
+
+## Support
+
+For issues and questions:
+- [Payload Discord](https://discord.com/invite/payload)
+- [Payload Documentation](https://payloadcms.com/docs)
+- [GitHub Discussions](https://github.com/payloadcms/payload/discussions)
+
+## License
+
+MIT
