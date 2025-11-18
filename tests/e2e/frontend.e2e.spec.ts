@@ -1,4 +1,4 @@
-import { expect, Page, test } from '@playwright/test'
+import { expect, Page, test, type APIRequestContext } from '@playwright/test'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -19,7 +19,7 @@ test.describe('Frontend', () => {
     cvc: '737',
     postcode: 'WS11 1DB',
   }
-  test.beforeAll(async ({ browser, request }, testInfo) => {
+  test.beforeAll(async ({ browser, request }) => {
     const context = await browser.newContext()
     page = await context.newPage()
     await createUserAndLogin(request, adminEmail, adminPassword)
@@ -380,12 +380,12 @@ test.describe('Frontend', () => {
   })
 
   async function createUserAndLogin(
-    request: any,
+    request: APIRequestContext,
     email: string,
     password: string,
     isAdmin: boolean = true,
   ) {
-    const data: any = {
+    const data: { email: string; password: string; roles?: string[] } = {
       email,
       password,
     }
@@ -394,23 +394,19 @@ test.describe('Frontend', () => {
       data.roles = ['admin']
     }
 
-    const response = await request.post(`${baseURL}/api/users`, {
+    await request.post(`${baseURL}/api/users`, {
       data,
     })
 
-    console.log({ response })
-
-    const login = await request.post(`${baseURL}/api/users/login`, {
+    await request.post(`${baseURL}/api/users/login`, {
       data: {
         email,
         password,
       },
     })
-
-    console.log({ login })
   }
 
-  async function createVariantsAndProducts(page: Page, request: any) {
+  async function createVariantsAndProducts(page: Page, request: APIRequestContext) {
     const variantType = await request.post(`${baseURL}/api/variantTypes`, {
       data: {
         name: 'brand',
@@ -470,7 +466,7 @@ test.describe('Frontend', () => {
 
     const productID = (await productWithVariants.json()).doc.id
 
-    const variantPayload = await request.post(`${baseURL}/api/variants`, {
+    await request.post(`${baseURL}/api/variants`, {
       data: {
         product: productID,
         variantType: variantTypeID,
@@ -482,7 +478,7 @@ test.describe('Frontend', () => {
       },
     })
 
-    const variantFigma = await request.post(`${baseURL}/api/variants`, {
+    await request.post(`${baseURL}/api/variants`, {
       data: {
         product: productID,
         variantType: variantTypeID,
@@ -494,7 +490,7 @@ test.describe('Frontend', () => {
       },
     })
 
-    const product = await request.post(`${baseURL}/api/products`, {
+    await request.post(`${baseURL}/api/products`, {
       data: {
         title: 'Test Product',
         slug: 'test-product',
@@ -507,7 +503,7 @@ test.describe('Frontend', () => {
       },
     })
 
-    const noInventoryProduct = await request.post(`${baseURL}/api/products`, {
+    await request.post(`${baseURL}/api/products`, {
       data: {
         title: 'No Inventory Product',
         slug: 'no-inventory-product',
