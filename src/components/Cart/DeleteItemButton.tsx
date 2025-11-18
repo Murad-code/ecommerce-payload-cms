@@ -24,7 +24,7 @@ export function DeleteItemButton({ item }: { item: CartItem }) {
         disabled={!itemId}
         onClick={(e: React.FormEvent<HTMLButtonElement>) => {
           e.preventDefault()
-          if (itemId) removeItem(itemId)
+          if (itemId) removeItem(itemId as unknown as number)
         }}
         type="button"
       >

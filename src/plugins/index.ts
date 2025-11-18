@@ -12,6 +12,7 @@ import { adminOnlyFieldAccess } from '@/access/adminOnlyFieldAccess'
 import { adminOrCustomerOwnerOrGuest } from '@/access/adminOrCustomerOwnerOrGuest'
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
 import { customerOnlyFieldAccess } from '@/access/customerOnlyFieldAccess'
+import { sendOrderConfirmationEmail } from '@/collections/Orders/hooks/sendOrderConfirmationEmail'
 import { ProductsCollection } from '@/collections/Products'
 import { Page, Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
@@ -73,6 +74,17 @@ export const plugins: Plugin[] = [
       adminOrPublishedStatus,
       customerOnlyFieldAccess,
     },
+    currencies: {
+      defaultCurrency: 'GBP',
+      supportedCurrencies: [
+        {
+          code: 'GBP',
+          symbol: '£',
+          decimals: 2,
+          label: 'British Pound',
+        },
+      ],
+    },
     customers: {
       slug: 'users',
     },
@@ -87,6 +99,25 @@ export const plugins: Plugin[] = [
     },
     products: {
       productsCollectionOverride: ProductsCollection,
+    },
+    orders: {
+      ordersCollectionOverride: ({ defaultCollection }) => {
+        // Add the email hook to the orders collection
+        const existingHooks = defaultCollection.hooks || {}
+        const existingAfterChange = Array.isArray(existingHooks.afterChange)
+          ? existingHooks.afterChange
+          : existingHooks.afterChange
+            ? [existingHooks.afterChange]
+            : []
+
+        return {
+          ...defaultCollection,
+          hooks: {
+            ...existingHooks,
+            afterChange: [...existingAfterChange, sendOrderConfirmationEmail],
+          },
+        }
+      },
     },
   }),
 ]

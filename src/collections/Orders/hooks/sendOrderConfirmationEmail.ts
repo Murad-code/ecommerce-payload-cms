@@ -46,16 +46,18 @@ export const sendOrderConfirmationEmail: CollectionAfterChangeHook<Order> = asyn
     // Get order details for the email
     const orderID = doc.id
     const orderTotal = doc.amount
-    const currency = doc.currency || 'USD'
+    const currency = doc.currency || 'GBP'
 
     // Format the order total
-    const formattedTotal = new Intl.NumberFormat('en-US', {
+    const formattedTotal = new Intl.NumberFormat('en-GB', {
       style: 'currency',
       currency: currency,
-    }).format(orderTotal || 0)
+    }).format((orderTotal || 0) / 100) // Convert from cents/pence to currency units
+
+    payload.logger.info(`Sending email via Resend adapter to ${emailTo}`)
 
     // Send the email
-    await payload.email.sendEmail({
+    const emailResult = await payload.email.sendEmail({
       to: emailTo,
       subject: `Order Confirmation #${orderID}`,
       html: `
@@ -93,12 +95,22 @@ export const sendOrderConfirmationEmail: CollectionAfterChangeHook<Order> = asyn
       `,
     })
 
-    payload.logger.info(`Order confirmation email sent to ${emailTo} for order #${orderID}`)
+    payload.logger.info(
+      `✅ Order confirmation email sent successfully to ${emailTo} for order #${orderID}. Result: ${JSON.stringify(emailResult || 'success')}`,
+    )
   } catch (error) {
     payload.logger.error({
       err: error,
-      message: `Failed to send order confirmation email for order #${doc.id}`,
+      message: `❌ Failed to send order confirmation email for order #${doc.id}`,
     })
+
+    // Log more details about the error
+    if (error instanceof Error) {
+      payload.logger.error(`Error details: ${error.message}`)
+      payload.logger.error(`Error stack: ${error.stack}`)
+    }
+
+    // Don't throw - we don't want to break the order creation process
   }
 
   return doc

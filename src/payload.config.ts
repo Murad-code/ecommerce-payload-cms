@@ -19,7 +19,6 @@ import { fileURLToPath } from 'url'
 
 import { Categories } from '@/collections/Categories'
 import { Media } from '@/collections/Media'
-import { sendOrderConfirmationEmail } from '@/collections/Orders/hooks/sendOrderConfirmationEmail'
 import { Pages } from '@/collections/Pages'
 import { Users } from '@/collections/Users'
 import { Footer } from '@/globals/Footer'
@@ -98,19 +97,12 @@ export default buildConfig({
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   onInit: async (payload) => {
-    // Add hook to send order confirmation emails
-    const ordersCollection = payload.collections['orders']
-    if (ordersCollection) {
-      payload.logger.info('Adding order confirmation email hook to orders collection')
-      const existingHooks = ordersCollection.config.hooks || {}
-      const existingAfterChange = existingHooks.afterChange || []
-      ordersCollection.config.hooks = {
-        ...existingHooks,
-        afterChange: [...existingAfterChange, sendOrderConfirmationEmail],
-      }
-      payload.logger.info('Order confirmation email hook added successfully')
+    // Verify email adapter is configured
+    if (!payload.email) {
+      payload.logger.error('⚠️ Email adapter is not configured! Emails will not be sent.')
     } else {
-      payload.logger.warn('Orders collection not found - email hook not added')
+      payload.logger.info('✅ Email adapter is configured and ready')
+      payload.logger.info(`Email from: ${process.env.EMAIL_FROM_ADDRESS || 'not set'}`)
     }
   },
   // Sharp is now an optional dependency -
