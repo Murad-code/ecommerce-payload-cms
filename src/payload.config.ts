@@ -104,6 +104,17 @@ export default buildConfig({
       payload.logger.info('✅ Email adapter is configured and ready')
       payload.logger.info(`Email from: ${process.env.EMAIL_FROM_ADDRESS || 'not set'}`)
     }
+
+    // Verify Stripe configuration
+    if (process.env.STRIPE_SECRET_KEY) {
+      payload.logger.info('✅ Stripe secret key is configured')
+      payload.logger.info('📦 Stripe plugin is configured to sync products')
+      payload.logger.info(
+        '💡 Check logs when creating/updating products to see Stripe sync activity',
+      )
+    } else {
+      payload.logger.warn('⚠️ STRIPE_SECRET_KEY not set - Stripe sync will not work')
+    }
   },
   // Sharp is now an optional dependency -
   // if you want to resize images, crop, set focal point, etc.

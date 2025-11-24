@@ -310,6 +310,8 @@ export interface Product {
    */
   generateSlug?: boolean | null;
   slug: string;
+  stripeID?: string | null;
+  skipSync?: boolean | null;
   updatedAt: string;
   createdAt: string;
   deletedAt?: string | null;
@@ -1631,6 +1633,8 @@ export interface ProductsSelect<T extends boolean = true> {
   categories?: T;
   generateSlug?: T;
   slug?: T;
+  stripeID?: T;
+  skipSync?: T;
   updatedAt?: T;
   createdAt?: T;
   deletedAt?: T;

@@ -1,7 +1,6 @@
 import { CallToAction } from '@/blocks/CallToAction/config'
 import { Content } from '@/blocks/Content/config'
 import { MediaBlock } from '@/blocks/MediaBlock/config'
-import { slugField } from 'payload'
 import { generatePreviewPath } from '@/utilities/generatePreviewPath'
 import { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
 import {
@@ -18,7 +17,41 @@ import {
   InlineToolbarFeature,
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
-import { DefaultDocumentIDType, Where } from 'payload'
+import type { CollectionBeforeValidateHook } from 'payload'
+import { DefaultDocumentIDType, slugField, Where } from 'payload'
+import { addStripeImage } from './hooks/addStripeImage'
+import { debugProductBeforeChange, debugProductChange } from './hooks/debugStripeSync'
+
+// Normalize hooks to arrays (Payload hooks can be a function, array, or undefined)
+const normalizeHooks = <T>(hooks: T | T[] | undefined): T[] =>
+  Array.isArray(hooks) ? hooks : hooks ? [hooks] : []
+
+/**
+ * Skip Stripe sync if required fields are missing
+ * This prevents errors when creating products before title is set
+ * The Stripe plugin requires a 'name' field, which comes from 'title'
+ */
+const skipStripeSyncIfMissingFields: CollectionBeforeValidateHook = ({ data, operation, req }) => {
+  // Only check on create operation
+  if (operation === 'create') {
+    // If title is missing, empty, or just whitespace, skip Stripe sync
+    const title = data?.title
+    if (!title || (typeof title === 'string' && title.trim() === '')) {
+      if (req.payload) {
+        req.payload.logger.info(
+          '⏭️ [STRIPE] Skipping sync - title is missing or empty (required for Stripe product name)',
+        )
+      }
+      // Set skipSync flag to prevent Stripe plugin from running
+      return {
+        ...data,
+        skipSync: true,
+      }
+    }
+  }
+  // For update operations, let it through (title should already exist)
+  return data
+}
 
 export const ProductsCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
@@ -209,4 +242,17 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     },
     slugField(),
   ],
+  hooks: {
+    ...defaultCollection.hooks,
+    beforeValidate: [
+      skipStripeSyncIfMissingFields,
+      addStripeImage, // Extract first gallery image for Stripe sync
+      ...normalizeHooks(defaultCollection.hooks?.beforeValidate),
+    ],
+    beforeChange: [
+      ...normalizeHooks(defaultCollection.hooks?.beforeChange),
+      debugProductBeforeChange,
+    ],
+    afterChange: [...normalizeHooks(defaultCollection.hooks?.afterChange), debugProductChange],
+  },
 })
