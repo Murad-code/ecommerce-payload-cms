@@ -13,6 +13,7 @@ import { adminOnlyFieldAccess } from '@/access/adminOnlyFieldAccess'
 import { adminOrCustomerOwnerOrGuest } from '@/access/adminOrCustomerOwnerOrGuest'
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
 import { customerOnlyFieldAccess } from '@/access/customerOnlyFieldAccess'
+import { OrdersCollection } from '@/collections/Orders'
 import { sendOrderConfirmationEmail } from '@/collections/Orders/hooks/sendOrderConfirmationEmail'
 import { ProductsCollection } from '@/collections/Products'
 import { Page, Product } from '@/payload-types'
@@ -103,7 +104,7 @@ export const plugins: Plugin[] = [
     },
     orders: {
       ordersCollectionOverride: ({ defaultCollection }) => {
-        // Add the email hook to the orders collection
+        // Merge fields and hooks from OrdersCollection with the default collection
         const existingHooks = defaultCollection.hooks || {}
         const existingAfterChange = Array.isArray(existingHooks.afterChange)
           ? existingHooks.afterChange
@@ -111,11 +112,48 @@ export const plugins: Plugin[] = [
             ? [existingHooks.afterChange]
             : []
 
+        const ordersCollectionHooks = OrdersCollection.hooks || {}
+        const ordersCollectionAfterChange = Array.isArray(ordersCollectionHooks.afterChange)
+          ? ordersCollectionHooks.afterChange
+          : ordersCollectionHooks.afterChange
+            ? [ordersCollectionHooks.afterChange]
+            : []
+
         return {
           ...defaultCollection,
+          fields: [...(defaultCollection.fields || []), ...(OrdersCollection.fields || [])],
           hooks: {
             ...existingHooks,
-            afterChange: [...existingAfterChange, sendOrderConfirmationEmail],
+            ...ordersCollectionHooks,
+            beforeChange: [
+              ...(Array.isArray(existingHooks.beforeChange)
+                ? existingHooks.beforeChange
+                : existingHooks.beforeChange
+                  ? [existingHooks.beforeChange]
+                  : []),
+              ...(Array.isArray(ordersCollectionHooks.beforeChange)
+                ? ordersCollectionHooks.beforeChange
+                : ordersCollectionHooks.beforeChange
+                  ? [ordersCollectionHooks.beforeChange]
+                  : []),
+            ],
+            afterRead: [
+              ...(Array.isArray(existingHooks.afterRead)
+                ? existingHooks.afterRead
+                : existingHooks.afterRead
+                  ? [existingHooks.afterRead]
+                  : []),
+              ...(Array.isArray(ordersCollectionHooks.afterRead)
+                ? ordersCollectionHooks.afterRead
+                : ordersCollectionHooks.afterRead
+                  ? [ordersCollectionHooks.afterRead]
+                  : []),
+            ],
+            afterChange: [
+              ...existingAfterChange,
+              ...ordersCollectionAfterChange,
+              sendOrderConfirmationEmail,
+            ],
           },
         }
       },

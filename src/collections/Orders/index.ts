@@ -1,0 +1,75 @@
+import type { CollectionConfig } from 'payload'
+import type { Order } from '@/payload-types'
+import { adminOnlyFieldAccess } from '@/access/adminOnlyFieldAccess'
+import { sendOrderConfirmationEmail } from './hooks/sendOrderConfirmationEmail'
+import { autoPopulateAdminNotes } from './hooks/autoPopulateAdminNotes'
+import { populateAdminNotes } from './hooks/populateAdminNotes'
+
+export const OrdersCollection: CollectionConfig<Order> = {
+  slug: 'orders',
+  fields: [
+    {
+      name: 'adminNotes',
+      type: 'array',
+      label: 'Admin Notes',
+      access: {
+        read: adminOnlyFieldAccess,
+        create: adminOnlyFieldAccess,
+        update: adminOnlyFieldAccess,
+      },
+      admin: {
+        description: 'Internal notes for admin use only. Not visible to customers.',
+      },
+      fields: [
+        {
+          name: 'note',
+          type: 'textarea',
+          required: true,
+          admin: {
+            description: 'Note content',
+          },
+        },
+        {
+          name: 'addedBy',
+          type: 'relationship',
+          relationTo: 'users',
+          required: true,
+          admin: {
+            readOnly: true,
+            hidden: true, // Auto-populated, hidden from UI
+            description: 'Admin who added this note (auto-populated)',
+          },
+        },
+        {
+          name: 'addedAt',
+          type: 'date',
+          required: true,
+          admin: {
+            readOnly: true,
+            hidden: true, // Auto-populated, hidden from UI
+            date: {
+              pickerAppearance: 'dayAndTime',
+            },
+            description: 'When this note was added (auto-populated)',
+          },
+        },
+        {
+          name: 'internal',
+          type: 'checkbox',
+          defaultValue: true,
+          admin: {
+            description: 'Internal notes are not visible to customers',
+            readOnly: true,
+            hidden: true, // Always true for admin notes, hidden from UI
+          },
+        },
+      ],
+    },
+  ],
+  hooks: {
+    beforeChange: [autoPopulateAdminNotes],
+    afterRead: [populateAdminNotes],
+    afterChange: [sendOrderConfirmationEmail],
+  },
+}
+

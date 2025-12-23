@@ -252,6 +252,30 @@ export interface Order {
   status?: OrderStatus;
   amount?: number | null;
   currency?: 'GBP' | null;
+  /**
+   * Internal notes for admin use only. Not visible to customers.
+   */
+  adminNotes?:
+    | {
+        /**
+         * Note content
+         */
+        note: string;
+        /**
+         * Admin who added this note (auto-populated)
+         */
+        addedBy: number | User;
+        /**
+         * When this note was added (auto-populated)
+         */
+        addedAt: string;
+        /**
+         * Internal notes are not visible to customers
+         */
+        internal?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1695,6 +1719,15 @@ export interface OrdersSelect<T extends boolean = true> {
   status?: T;
   amount?: T;
   currency?: T;
+  adminNotes?:
+    | T
+    | {
+        note?: T;
+        addedBy?: T;
+        addedAt?: T;
+        internal?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
