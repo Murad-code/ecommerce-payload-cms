@@ -2,11 +2,9 @@
 
 import type { PayloadAdminBarProps } from '@payloadcms/admin-bar'
 
-import { cn } from '@/utilities/cn'
-import { useSelectedLayoutSegments } from 'next/navigation'
 import { PayloadAdminBar } from '@payloadcms/admin-bar'
-import React, { useState } from 'react'
-import { User } from '@/payload-types'
+import { useSelectedLayoutSegments } from 'next/navigation'
+import React from 'react'
 
 type CollectionKey = 'pages' | 'posts' | 'projects'
 
@@ -32,23 +30,12 @@ export const AdminBar: React.FC<{
 }> = (props) => {
   const { adminBarProps } = props || {}
   const segments = useSelectedLayoutSegments()
-  const [show, setShow] = useState(false)
   const collectionKey = segments?.[1] as CollectionKey | undefined
-  const collection: CollectionKey = collectionKey && collectionLabels[collectionKey] ? collectionKey : 'pages'
-
-  const onAuthChange = React.useCallback((user: User) => {
-    const canSeeAdmin = user?.roles && Array.isArray(user?.roles) && user?.roles?.includes('admin')
-
-    setShow(Boolean(canSeeAdmin))
-  }, [])
+  const collection: CollectionKey =
+    collectionKey && collectionLabels[collectionKey] ? collectionKey : 'pages'
 
   return (
-    <div
-      className={cn('py-2 bg-black text-white', {
-        block: show,
-        hidden: !show,
-      })}
-    >
+    <div className="relative left-0 right-0 z-30 py-2 bg-black text-white">
       <div className="container">
         <PayloadAdminBar
           {...adminBarProps}
@@ -64,7 +51,6 @@ export const AdminBar: React.FC<{
             singular: collectionLabels[collection].singular,
           }}
           logo={<Title />}
-          onAuthChange={onAuthChange}
           style={{
             backgroundColor: 'transparent',
             padding: 0,

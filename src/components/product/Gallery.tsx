@@ -7,7 +7,14 @@ import { Media } from '@/components/Media'
 import { useSearchParams } from 'next/navigation'
 import React, { useEffect } from 'react'
 
-import { Carousel, CarouselApi, CarouselContent, CarouselItem } from '@/components/ui/carousel'
+import {
+  Carousel,
+  CarouselApi,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel'
 import { DefaultDocumentIDType } from 'payload'
 
 type Props = {
@@ -17,18 +24,30 @@ type Props = {
 export const Gallery: React.FC<Props> = ({ gallery }) => {
   const searchParams = useSearchParams()
   const [current, setCurrent] = React.useState(0)
-  const [api, setApi] = React.useState<CarouselApi>()
+  const [mainApi, setMainApi] = React.useState<CarouselApi>()
+  const [thumbApi, setThumbApi] = React.useState<CarouselApi>()
 
+  // Sync main carousel with thumbnail carousel
   useEffect(() => {
-    if (!api) {
-      return
-    }
-  }, [api])
+    if (!mainApi || !thumbApi) return
 
+    const onSelect = () => {
+      const selectedIndex = mainApi.selectedScrollSnap()
+      setCurrent(selectedIndex)
+      thumbApi.scrollTo(selectedIndex)
+    }
+
+    mainApi.on('select', onSelect)
+    return () => {
+      mainApi.off('select', onSelect)
+    }
+  }, [mainApi, thumbApi])
+
+  // Handle variant selection from URL params
   useEffect(() => {
     const values = searchParams.values().toArray()
 
-    if (values && api) {
+    if (values && mainApi) {
       const index = gallery.findIndex((item) => {
         if (!item.variantOption) return false
 
@@ -42,63 +61,96 @@ export const Gallery: React.FC<Props> = ({ gallery }) => {
       })
       if (index !== -1) {
         setCurrent(index)
-        api.scrollTo(index, true)
+        mainApi.scrollTo(index, true)
       }
     }
-  }, [searchParams, api, gallery])
+  }, [searchParams, mainApi, gallery])
 
-  // Filter out items with null/undefined images and find valid current image
+  // Filter out items with null/undefined images
   const validGalleryItems = gallery.filter((item) => item.image && typeof item.image === 'object')
 
-  // Find a valid current image index
-  let currentImage: MediaType | null = null
-  if (gallery[current]?.image && typeof gallery[current].image === 'object') {
-    currentImage = gallery[current].image as MediaType
-  } else if (validGalleryItems.length > 0 && validGalleryItems[0]?.image) {
-    currentImage = validGalleryItems[0].image as MediaType
-  }
-
-  if (validGalleryItems.length === 0 || !currentImage) {
+  if (validGalleryItems.length === 0) {
     return null
   }
 
+  const handleThumbnailClick = (index: number) => {
+    setCurrent(index)
+    mainApi?.scrollTo(index, true)
+  }
+
   return (
-    <div>
-      <div className="relative w-full overflow-hidden mb-8">
-        <Media resource={currentImage} className="w-full" imgClassName="w-full rounded-lg" />
+    <div className="w-full">
+      {/* Main Image Carousel - Swipeable on mobile */}
+      <div className="relative w-full mb-4 md:mb-8">
+        <Carousel
+          setApi={setMainApi}
+          className="w-full"
+          opts={{
+            align: 'start',
+            loop: false,
+            containScroll: 'trimSnaps',
+            slidesToScroll: 1,
+          }}
+        >
+          <CarouselContent>
+            {validGalleryItems.map((item, i) => {
+              if (!item.image || typeof item.image !== 'object') return null
+
+              const imageId = 'id' in item.image ? item.image.id : i
+
+              return (
+                <CarouselItem key={`main-${imageId}-${i}`} className="basis-full">
+                  <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+                    <Media
+                      resource={item.image as MediaType}
+                      className="w-full h-full"
+                      imgClassName="w-full h-full object-cover rounded-lg"
+                    />
+                  </div>
+                </CarouselItem>
+              )
+            })}
+          </CarouselContent>
+          {validGalleryItems.length > 1 && (
+            <>
+              <CarouselPrevious className="left-2 md:left-4" />
+              <CarouselNext className="right-2 md:right-4" />
+            </>
+          )}
+        </Carousel>
       </div>
 
-      <Carousel setApi={setApi} className="w-full" opts={{ align: 'start', loop: false }}>
-        <CarouselContent>
-          {validGalleryItems.map((item, i) => {
-            if (!item.image || typeof item.image !== 'object') return null
+      {/* Thumbnail Carousel - Hidden on mobile, shown on desktop */}
+      {validGalleryItems.length > 1 && (
+        <Carousel
+          setApi={setThumbApi}
+          className="w-full hidden md:block"
+          opts={{ align: 'start', loop: false, containScroll: 'trimSnaps', slidesToScroll: 1 }}
+        >
+          <CarouselContent>
+            {validGalleryItems.map((item, i) => {
+              if (!item.image || typeof item.image !== 'object') return null
 
-            const imageId = 'id' in item.image ? item.image.id : i
+              const imageId = 'id' in item.image ? item.image.id : i
+              const isActive = current === i
 
-            return (
-              <CarouselItem
-                className="basis-1/5"
-                key={`${imageId}-${i}`}
-                onClick={() => {
-                  const originalIndex = gallery.findIndex((galleryItem) => galleryItem === item)
-                  if (originalIndex !== -1) {
-                    setCurrent(originalIndex)
-                  }
-                }}
-              >
-                <GridTileImage
-                  active={
-                    gallery[current]?.image && typeof gallery[current].image === 'object'
-                      ? gallery[current].image === item.image
-                      : i === 0
-                  }
-                  media={item.image as MediaType}
-                />
-              </CarouselItem>
-            )
-          })}
-        </CarouselContent>
-      </Carousel>
+              return (
+                <CarouselItem
+                  className="basis-1/5 cursor-pointer"
+                  key={`thumb-${imageId}-${i}`}
+                  onClick={() => handleThumbnailClick(i)}
+                >
+                  <GridTileImage
+                    active={isActive}
+                    media={item.image as MediaType}
+                    isInteractive={true}
+                  />
+                </CarouselItem>
+              )
+            })}
+          </CarouselContent>
+        </Carousel>
+      )}
     </div>
   )
 }

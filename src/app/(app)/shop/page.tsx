@@ -2,7 +2,6 @@ import { Grid } from '@/components/Grid'
 import { ProductGridItem } from '@/components/ProductGridItem'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
-import React from 'react'
 
 export const metadata = {
   description: 'Search for products in the store.',
@@ -78,7 +77,7 @@ export default async function ShopPage({ searchParams }: Props) {
   return (
     <div>
       {searchValue ? (
-        <p className="mb-4">
+        <p className="mb-4 text-foreground font-primary">
           {products.docs?.length === 0
             ? 'There are no products that match '
             : `Showing ${products.docs.length} ${resultsText} for `}
@@ -87,7 +86,9 @@ export default async function ShopPage({ searchParams }: Props) {
       ) : null}
 
       {!searchValue && products.docs?.length === 0 && (
-        <p className="mb-4">No products found. Please try different filters.</p>
+        <p className="mb-4 text-foreground font-primary">
+          No products found. Please try different filters.
+        </p>
       )}
 
       {products?.docs.length > 0 ? (

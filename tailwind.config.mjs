@@ -102,8 +102,13 @@ export default {
         },
       }),
       fontFamily: {
-        mono: ['var(--font-geist-mono)'],
-        sans: ['var(--font-geist-sans)'],
+        primary: ['var(--font-primary)'],
+        secondary: ['var(--font-secondary)'],
+        tertiary: ['var(--font-tertiary)'],
+        // Legacy aliases for backward compatibility
+        sans: ['var(--font-primary)'],
+        mono: ['var(--font-secondary)'],
+        serif: ['var(--font-tertiary)'],
       },
       keyframes: {
         fadeIn: {

@@ -1,6 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 
 const AdminNotesField = ({ value, onChange }: { value?: any; onChange?: (value: any) => void }) => {
   const [newNote, setNewNote] = useState('')
@@ -31,14 +34,14 @@ const AdminNotesField = ({ value, onChange }: { value?: any; onChange?: (value: 
   const currentValue = value || []
 
   return (
-    <div style={{ padding: '1rem', border: '1px solid #e0e0e0', borderRadius: '4px' }}>
-      <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Admin Notes</h3>
+    <div className="p-4 border border-border rounded">
+      <h3 className="mt-0 mb-4">Admin Notes</h3>
 
       {/* Existing Notes */}
       {currentValue.length > 0 && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h4 style={{ marginBottom: '0.5rem' }}>Notes History</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="mb-6">
+          <h4 className="mb-2">Notes History</h4>
+          <div className="flex flex-col gap-3">
             {currentValue.map((note: any, index: number) => {
               // Get user display name
               const getUserDisplay = () => {
@@ -65,42 +68,21 @@ const AdminNotesField = ({ value, onChange }: { value?: any; onChange?: (value: 
               return (
                 <div
                   key={index}
-                  style={{
-                    padding: '0.75rem',
-                    background: '#f9f9f9',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '4px',
-                  }}
+                  className="p-3 bg-muted border border-border rounded"
                 >
                   {/* Note Content */}
-                  <p
-                    style={{
-                      margin: '0 0 0.75rem 0',
-                      fontSize: '0.875rem',
-                      whiteSpace: 'pre-wrap',
-                    }}
-                  >
+                  <p className="m-0 mb-3 text-sm whitespace-pre-wrap">
                     {note.note}
                   </p>
 
                   {/* Metadata */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.25rem',
-                      paddingTop: '0.75rem',
-                      borderTop: '1px solid #e0e0e0',
-                      fontSize: '0.75rem',
-                      color: '#666',
-                    }}
-                  >
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <span style={{ fontWeight: '500', minWidth: '80px' }}>Created By:</span>
+                  <div className="flex flex-col gap-1 pt-3 border-t border-border text-xs text-muted-foreground">
+                    <div className="flex gap-2">
+                      <span className="font-medium min-w-[80px]">Created By:</span>
                       <span>{getUserDisplay()}</span>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <span style={{ fontWeight: '500', minWidth: '80px' }}>Date Added:</span>
+                    <div className="flex gap-2">
+                      <span className="font-medium min-w-[80px]">Date Added:</span>
                       <span>{getFormattedDate()}</span>
                     </div>
                   </div>
@@ -112,41 +94,27 @@ const AdminNotesField = ({ value, onChange }: { value?: any; onChange?: (value: 
       )}
 
       {/* Add New Note */}
-      <div style={{ padding: '1rem', background: '#f9f9f9', borderRadius: '4px' }}>
-        <h4 style={{ marginTop: 0, marginBottom: '1rem' }}>Add New Note</h4>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="p-4 bg-muted rounded">
+        <h4 className="mt-0 mb-4">Add New Note</h4>
+        <div className="flex flex-col gap-4">
           <div>
-            <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+            <Label className="block mb-1 font-medium">
               Note
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
               rows={4}
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontFamily: 'inherit',
-              }}
               placeholder="Enter your note here..."
             />
           </div>
-          <button
+          <Button
             onClick={handleAddNote}
             disabled={!newNote.trim()}
-            style={{
-              padding: '0.5rem 1rem',
-              background: newNote.trim() ? '#28a745' : '#ccc',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: newNote.trim() ? 'pointer' : 'not-allowed',
-            }}
+            className={newNote.trim() ? '' : 'opacity-50 cursor-not-allowed'}
           >
             Add Note
-          </button>
+          </Button>
         </div>
       </div>
     </div>

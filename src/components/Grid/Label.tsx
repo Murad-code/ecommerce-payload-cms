@@ -17,13 +17,13 @@ export const Label: React.FC<Props> = ({ amount, position = 'bottom', title }) =
       })}
     >
       <div className="flex items-end justify-between text-sm grow font-semibold ">
-        <h3 className="mr-4 font-mono line-clamp-2 border p-2 px-3 leading-none tracking-tight rounded-full bg-white/70 text-black backdrop-blur-md dark:border-neutral-800 dark:bg-black/70 dark:text-white">
+        <h3 className="mr-4 font-tertiary line-clamp-2 border p-2 px-3 leading-none tracking-tight rounded-full bg-white/70 text-black backdrop-blur-md dark:border-neutral-800 dark:bg-black/70 dark:text-white">
           {title}
         </h3>
 
         <Price
           amount={amount}
-          className="flex-none rounded-full bg-blue-600 p-2 text-white"
+          className="flex-none rounded-full bg-secondary p-2 text-secondary-foreground"
           currencyCodeClassName="hidden @[275px]/label:inline"
         />
       </div>

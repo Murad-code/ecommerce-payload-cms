@@ -4,15 +4,15 @@ import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { GridTileImage } from '@/components/Grid/tile'
 import { Gallery } from '@/components/product/Gallery'
 import { ProductDescription } from '@/components/product/ProductDescription'
+import { Button } from '@/components/ui/button'
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
+import { ChevronLeftIcon } from 'lucide-react'
+import { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { getPayload } from 'payload'
 import React, { Suspense } from 'react'
-import { Button } from '@/components/ui/button'
-import { ChevronLeftIcon } from 'lucide-react'
-import { Metadata } from 'next'
 
 type Args = {
   params: Promise<{
@@ -117,18 +117,18 @@ export default async function ProductPage({ params }: Args) {
         }}
         type="application/ld+json"
       />
-      <div className="container pt-8 pb-8">
+      <div className="container pt-4 pb-8 md:pt-8">
         <Button asChild variant="ghost" className="mb-4">
           <Link href="/shop">
             <ChevronLeftIcon />
             All products
           </Link>
         </Button>
-        <div className="flex flex-col gap-12 rounded-lg border p-8 md:py-12 lg:flex-row lg:gap-8 bg-primary-foreground">
+        <div className="flex flex-col gap-6 md:gap-12 rounded-lg border p-4 md:p-8 md:py-12 lg:flex-row lg:gap-8 bg-primary">
           <div className="h-full w-full basis-full lg:basis-1/2">
             <Suspense
               fallback={
-                <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden" />
+                <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden rounded-lg" />
               }
             >
               {Boolean(gallery?.length) && <Gallery gallery={gallery} />}

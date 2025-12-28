@@ -73,7 +73,7 @@ export const ProductItem: React.FC<Props> = ({
             <Link href={itemURL}>{title}</Link>
           </p>
           {variant && (
-            <p className="text-sm font-mono text-primary/50 tracking-widest">
+            <p className="text-sm font-tertiary text-primary/50 tracking-widest">
               {variant.options
                 ?.map((option) => {
                   if (typeof option === 'object') return option.label
@@ -92,7 +92,7 @@ export const ProductItem: React.FC<Props> = ({
           <div className="text-right">
             <p className="font-medium text-lg">Subtotal</p>
             <Price
-              className="font-mono text-primary/50 text-sm"
+              className="font-tertiary text-primary/50 text-sm"
               amount={itemPrice * quantity}
               currencyCode={currencyCode}
             />

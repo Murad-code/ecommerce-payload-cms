@@ -21,11 +21,25 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentColor);
   }
+
+  /* Position Header below AdminBar when AdminBar is visible */
+  body[data-admin-bar='visible'] .header-nav {
+    top: 2.5rem;
+  }
 }
 
 @theme {
-  --font-sans: var(--font-geist-sans), sans-serif;
-  --font-mono: var(--font-geist-mono), sans-serif;
+  /* 
+   * Font System:
+   * - Primary (font-primary): Geist Sans - Default body text, most common
+   * - Tertiary (font-tertiary): System serif - Labels, prices, navigation, hero sections, call-to-action, elegant headings
+   * 
+   * Usage in Tailwind: font-primary, font-tertiary
+   * Legacy aliases still work: font-sans, font-mono, font-serif
+   * Note: font-secondary is deprecated - use font-tertiary instead
+   */
+  --font-primary: var(--font-geist-sans), sans-serif;
+  --font-tertiary: 'Georgia', 'Times New Roman', 'Times', serif;
 }
 
 @utility container {
@@ -35,33 +49,38 @@
 }
 
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(222.2 84% 4.9%);
+  /* Very light white background - lighter than primary so cream white stands out */
+  --background: hsl(40 10% 99%);
+  --foreground: hsl(0 0% 0%);
 
-  --card: hsl(240 5% 96%);
-  --card-foreground: hsl(222.2 84% 4.9%);
+  /* Card uses same as background or slightly different */
+  --card: hsl(40 10% 99%);
+  --card-foreground: hsl(0 0% 0%);
 
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(222.2 84% 4.9%);
+  --popover: hsl(40 15% 98%);
+  --popover-foreground: hsl(0 0% 0%);
 
-  --primary: hsl(222.2 47.4% 11.2%);
-  --primary-foreground: hsl(210 40% 98%);
+  /* Primary: Cream soft white */
+  --primary: hsl(40 15% 98%);
+  --primary-foreground: hsl(0 0% 0%);
 
-  --secondary: hsl(210 40% 96.1%);
-  --secondary-foreground: hsl(222.2 47.4% 11.2%);
+  /* Secondary: Soft gold */
+  --secondary: hsl(45 60% 65%);
+  --secondary-foreground: hsl(0 0% 100%);
 
-  --muted: hsl(210 40% 96.1%);
-  --muted-foreground: hsl(215.4 16.3% 46.9%);
+  --muted: hsl(40 10% 96%);
+  --muted-foreground: hsl(0 0% 40%);
 
-  --accent: hsl(210 40% 96.1%);
-  --accent-foreground: hsl(222.2 47.4% 11.2%);
+  --accent: hsl(45 60% 65%);
+  --accent-foreground: hsl(0 0% 100%);
 
   --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(210 40% 98%);
+  --destructive-foreground: hsl(0 0% 100%);
 
-  --border: hsl(240 6% 90%);
-  --input: hsl(214.3 31.8% 91.4%);
-  --ring: hsl(222.2 84% 4.9%);
+  /* Subtle border for cream white elements */
+  --border: hsl(40 10% 92%);
+  --input: hsl(40 10% 95%);
+  --ring: hsl(45 60% 65%);
 
   --radius: hsl(0.2rem);
 
@@ -77,14 +96,16 @@
   --card: hsl(0, 0%, 8%);
   --card-foreground: hsl(210 40% 98%);
 
-  --popover: hsl(222.2 84% 4.9%);
+  --popover: hsl(0, 0%, 8%);
   --popover-foreground: hsl(210 40% 98%);
 
-  --primary: hsl(210 40% 98%);
-  --primary-foreground: hsl(0, 0%, 6%);
+  /* Dark mode primary: slightly darker cream white */
+  --primary: hsl(40 15% 20%);
+  --primary-foreground: hsl(210 40% 98%);
 
-  --secondary: hsl(217.2 32.6% 17.5%);
-  --secondary-foreground: hsl(210 40% 98%);
+  /* Dark mode secondary: softer, darker gold */
+  --secondary: hsl(45 50% 50%);
+  --secondary-foreground: hsl(0 0% 100%);
 
   --muted: hsl(217.2 32.6% 17.5%);
   --muted-foreground: hsl(215 20.2% 65.1%);
@@ -153,7 +174,7 @@
 
 html {
   opacity: 0;
-  @apply font-sans;
+  font-family: var(--font-primary);
 }
 
 html[data-theme='dark'],
