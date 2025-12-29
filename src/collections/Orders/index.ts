@@ -69,6 +69,55 @@ export const OrdersCollection: CollectionConfig = {
         },
       ],
     },
+    {
+      name: 'totalRefunded',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        description: 'Total amount refunded for this order (in smallest currency unit)',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'refunds',
+      type: 'relationship',
+      relationTo: 'refunds',
+      hasMany: true,
+      admin: {
+        description: 'All refunds associated with this order',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'refundActions',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: {
+          Field: '@/components/admin/OrderRefundActions#OrderRefundActions',
+        },
+        condition: (data) => {
+          // Only show if order can be refunded
+          return (
+            data?.status === 'completed' ||
+            data?.status === 'partially_refunded'
+          )
+        },
+      },
+    },
+    {
+      name: 'refundHistory',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/components/admin/RefundHistory#RefundHistory',
+        },
+        condition: (data) => {
+          // Only show if there are refunds
+          return data?.refunds && Array.isArray(data.refunds) && data.refunds.length > 0
+        },
+      },
+    },
   ],
   hooks: {
     beforeChange: [autoPopulateCustomerEmail, validateCustomerEmail, autoPopulateAdminNotes],

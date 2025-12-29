@@ -15,6 +15,8 @@ export const OrderStatus: React.FC<Props> = ({ status, className }) => {
         {
           'bg-primary/10': status === 'processing',
           'bg-success': status === 'completed',
+          'bg-warning/10': status === 'partially_refunded',
+          'bg-destructive/10': status === 'refunded' || status === 'cancelled',
         },
       )}
     >

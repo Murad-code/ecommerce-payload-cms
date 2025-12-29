@@ -10,7 +10,7 @@
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "OrderStatus".
  */
-export type OrderStatus = ('processing' | 'completed' | 'cancelled' | 'refunded') | null;
+export type OrderStatus = ('processing' | 'completed' | 'cancelled' | 'refunded' | 'partially_refunded') | null;
 /**
  * Supported timezones in IANA format.
  *
@@ -76,6 +76,8 @@ export interface Config {
     pages: Page;
     categories: Category;
     media: Media;
+    'refund-requests': RefundRequest;
+    refunds: Refund;
     forms: Form;
     'form-submissions': FormSubmission;
     addresses: Address;
@@ -109,6 +111,8 @@ export interface Config {
     pages: PagesSelect<false> | PagesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'refund-requests': RefundRequestsSelect<false> | RefundRequestsSelect<true>;
+    refunds: RefundsSelect<false> | RefundsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
@@ -276,6 +280,14 @@ export interface Order {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Total amount refunded for this order (in smallest currency unit)
+   */
+  totalRefunded?: number | null;
+  /**
+   * All refunds associated with this order
+   */
+  refunds?: (number | Refund)[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -981,6 +993,163 @@ export interface Cart {
   createdAt: string;
 }
 /**
+ * Processed refunds - audit trail of all refund transactions. To create a refund, use the refund buttons on the order detail page.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "refunds".
+ */
+export interface Refund {
+  id: number;
+  /**
+   * ⚠️ Select the order to refund. The transaction will be automatically selected from this order to prevent errors.
+   */
+  order: number | Order;
+  /**
+   * ✅ Transaction is automatically selected from the order above. This prevents refunding the wrong customer.
+   */
+  transaction?: (number | null) | Transaction;
+  /**
+   * Refund amount in smallest currency unit (e.g., pence for GBP)
+   */
+  amount: number;
+  currency: 'GBP';
+  /**
+   * Whether this is a full or partial refund
+   */
+  type: 'full' | 'partial';
+  /**
+   * Current status of the refund
+   */
+  status: 'processing' | 'completed' | 'failed';
+  /**
+   * Stripe refund ID returned from Stripe API
+   */
+  stripeRefundId?: string | null;
+  /**
+   * Original Stripe charge ID
+   */
+  stripeChargeId?: string | null;
+  /**
+   * Payment intent ID from the transaction
+   */
+  paymentIntentId: string;
+  /**
+   * Reason for the refund (optional)
+   */
+  reason?: string | null;
+  /**
+   * Admin who processed this refund
+   */
+  processedBy?: (number | null) | User;
+  /**
+   * When the refund was processed
+   */
+  processedAt?: string | null;
+  /**
+   * Items being refunded (for partial refunds)
+   */
+  items?:
+    | {
+        product: number | Product;
+        variant?: (number | null) | Variant;
+        quantity: number;
+        /**
+         * Refund amount for this item
+         */
+        amount: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * The original refund request (if this refund was processed from a customer request)
+   */
+  refundRequest?: (number | null) | RefundRequest;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Customer refund requests awaiting admin review
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "refund-requests".
+ */
+export interface RefundRequest {
+  id: number;
+  /**
+   * The order for which refund is requested
+   */
+  order: number | Order;
+  /**
+   * Customer who requested the refund
+   */
+  customer?: (number | null) | User;
+  /**
+   * Customer email (for guest orders)
+   */
+  customerEmail?: string | null;
+  /**
+   * Type of refund requested
+   */
+  type: 'full' | 'partial';
+  /**
+   * Requested refund amount in smallest currency unit (for partial refunds)
+   */
+  amount?: number | null;
+  /**
+   * Currency of the refund request
+   */
+  currency: 'GBP';
+  /**
+   * Customer reason for requesting refund
+   */
+  reason: string;
+  /**
+   * Current status of the refund request
+   */
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  /**
+   * Items to refund (for partial refund requests)
+   */
+  items?:
+    | {
+        product: number | Product;
+        variant?: (number | null) | Variant;
+        quantity: number;
+        /**
+         * Refund amount for this item
+         */
+        amount: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Admin reason for rejecting the request
+   */
+  rejectionReason?: string | null;
+  /**
+   * Admin who rejected this request
+   */
+  rejectedBy?: (number | null) | User;
+  /**
+   * When the request was rejected
+   */
+  rejectedAt?: string | null;
+  /**
+   * Admin who approved this request
+   */
+  approvedBy?: (number | null) | User;
+  /**
+   * When the request was approved
+   */
+  approvedAt?: string | null;
+  /**
+   * The processed refund (if this request was approved and processed)
+   */
+  refund?: (number | null) | Refund;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "addresses".
  */
@@ -1097,6 +1266,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'refund-requests';
+        value: number | RefundRequest;
+      } | null)
+    | ({
+        relationTo: 'refunds';
+        value: number | Refund;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1408,6 +1585,67 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "refund-requests_select".
+ */
+export interface RefundRequestsSelect<T extends boolean = true> {
+  order?: T;
+  customer?: T;
+  customerEmail?: T;
+  type?: T;
+  amount?: T;
+  currency?: T;
+  reason?: T;
+  status?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        variant?: T;
+        quantity?: T;
+        amount?: T;
+        id?: T;
+      };
+  rejectionReason?: T;
+  rejectedBy?: T;
+  rejectedAt?: T;
+  approvedBy?: T;
+  approvedAt?: T;
+  refund?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "refunds_select".
+ */
+export interface RefundsSelect<T extends boolean = true> {
+  order?: T;
+  transaction?: T;
+  amount?: T;
+  currency?: T;
+  type?: T;
+  status?: T;
+  stripeRefundId?: T;
+  stripeChargeId?: T;
+  paymentIntentId?: T;
+  reason?: T;
+  processedBy?: T;
+  processedAt?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        variant?: T;
+        quantity?: T;
+        amount?: T;
+        id?: T;
+      };
+  refundRequest?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1728,6 +1966,8 @@ export interface OrdersSelect<T extends boolean = true> {
         internal?: T;
         id?: T;
       };
+  totalRefunded?: T;
+  refunds?: T;
   updatedAt?: T;
   createdAt?: T;
 }

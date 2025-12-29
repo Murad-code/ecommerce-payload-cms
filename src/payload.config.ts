@@ -20,6 +20,8 @@ import { fileURLToPath } from 'url'
 import { Categories } from '@/collections/Categories'
 import { Media } from '@/collections/Media'
 import { Pages } from '@/collections/Pages'
+import { RefundRequests } from '@/collections/RefundRequests'
+import { Refunds } from '@/collections/Refunds'
 import { Users } from '@/collections/Users'
 import { Footer } from '@/globals/Footer'
 import { Header } from '@/globals/Header'
@@ -40,7 +42,7 @@ export default buildConfig({
     },
     user: Users.slug,
   },
-  collections: [Users, Pages, Categories, Media],
+  collections: [Users, Pages, Categories, Media, RefundRequests, Refunds],
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URI || '',

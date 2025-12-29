@@ -14,6 +14,9 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { OrderStatus } from '@/components/OrderStatus'
 import { AddressItem } from '@/components/addresses/AddressItem'
+import { RefundRequestForm } from '@/components/refunds/RefundRequestForm'
+import { RefundStatus } from '@/components/refunds/RefundStatus'
+import { RefundHistory } from '@/components/refunds/RefundHistory'
 
 export const dynamic = 'force-dynamic'
 
@@ -77,6 +80,8 @@ export default async function Order({ params, searchParams }: PageProps) {
         createdAt: true,
         updatedAt: true,
         shippingAddress: true,
+        totalRefunded: true,
+        refunds: true,
       },
     })
 
@@ -105,6 +110,29 @@ export default async function Order({ params, searchParams }: PageProps) {
     notFound()
   }
 
+  // Fetch refund requests for this order
+  let refundRequests: any[] = []
+  try {
+    const refundRequestsResult = await payload.find({
+      collection: 'refund-requests',
+      where: {
+        order: {
+          equals: order.id,
+        },
+      },
+      depth: 2,
+      sort: '-createdAt',
+    })
+    refundRequests = refundRequestsResult.docs
+  } catch (error) {
+    // Silently handle error
+  }
+
+  // Get active refund request (pending or approved)
+  const activeRefundRequest = refundRequests.find(
+    (r) => r.status === 'pending' || r.status === 'approved',
+  )
+
   return (
     <div className="">
       <div className="flex gap-8 justify-between items-center mb-6">
@@ -121,7 +149,7 @@ export default async function Order({ params, searchParams }: PageProps) {
           <div></div>
         )}
 
-        <h1 className="text-sm uppercase font-mono px-2 bg-primary/10 rounded tracking-[0.07em]">
+        <h1 className="text-sm uppercase font-tertiary px-2 bg-primary/10 rounded tracking-[0.07em]">
           <span className="">{`Order #${order.id}`}</span>
         </h1>
       </div>
@@ -129,7 +157,7 @@ export default async function Order({ params, searchParams }: PageProps) {
       <div className="bg-card border rounded-lg px-6 py-4 flex flex-col gap-12">
         <div className="flex flex-col gap-6 lg:flex-row lg:justify-between">
           <div className="">
-            <p className="font-mono uppercase text-primary/50 mb-1 text-sm">Order Date</p>
+            <p className="font-tertiary uppercase text-primary/50 mb-1 text-sm">Order Date</p>
             <p className="text-lg">
               <time dateTime={order.createdAt}>
                 {formatDateTime({ date: order.createdAt, format: 'MMMM dd, yyyy' })}
@@ -138,13 +166,13 @@ export default async function Order({ params, searchParams }: PageProps) {
           </div>
 
           <div className="">
-            <p className="font-mono uppercase text-primary/50 mb-1 text-sm">Total</p>
+            <p className="font-tertiary uppercase text-primary/50 mb-1 text-sm">Total</p>
             {order.amount && <Price className="text-lg" amount={order.amount} />}
           </div>
 
           {order.status && (
             <div className="grow max-w-1/3">
-              <p className="font-mono uppercase text-primary/50 mb-1 text-sm">Status</p>
+              <p className="font-tertiary uppercase text-primary/50 mb-1 text-sm">Status</p>
               <OrderStatus className="text-sm" status={order.status} />
             </div>
           )}
@@ -152,7 +180,7 @@ export default async function Order({ params, searchParams }: PageProps) {
 
         {order.items && (
           <div>
-            <h2 className="font-mono text-primary/50 mb-4 uppercase text-sm">Items</h2>
+            <h2 className="font-tertiary text-primary/50 mb-4 uppercase text-sm">Items</h2>
             <ul className="flex flex-col gap-6">
               {order.items?.map((item, index) => {
                 if (typeof item.product === 'string') {
@@ -182,12 +210,30 @@ export default async function Order({ params, searchParams }: PageProps) {
 
         {order.shippingAddress && (
           <div>
-            <h2 className="font-mono text-primary/50 mb-4 uppercase text-sm">Shipping Address</h2>
+            <h2 className="font-tertiary text-primary/50 mb-4 uppercase text-sm">Shipping Address</h2>
 
             {/* @ts-expect-error - some kind of type hell */}
             <AddressItem address={order.shippingAddress} hideActions />
           </div>
         )}
+
+        {/* Refund Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-tertiary text-primary/50 uppercase text-sm">Refunds</h2>
+            {!activeRefundRequest && (
+              <RefundRequestForm order={order} userEmail={user?.email || order.customerEmail || undefined} />
+            )}
+          </div>
+
+          {activeRefundRequest && (
+            <RefundStatus refundRequest={activeRefundRequest} />
+          )}
+
+          {order.refunds && Array.isArray(order.refunds) && order.refunds.length > 0 && (
+            <RefundHistory refunds={order.refunds} />
+          )}
+        </div>
       </div>
     </div>
   )

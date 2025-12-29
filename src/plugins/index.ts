@@ -120,9 +120,43 @@ export const plugins: Plugin[] = [
             ? [ordersCollectionHooks.afterChange]
             : []
 
+        // Override status field to include 'partially_refunded'
+        // Override transactions field label to 'Transaction ID'
+        const defaultFields = defaultCollection.fields || []
+        const updatedFields = defaultFields.map((field: any) => {
+          if (field.name === 'status' && field.type === 'select') {
+            // Add 'partially_refunded' option to status field
+            return {
+              ...field,
+              options: [
+                ...(field.options || []),
+                {
+                  label: 'Partially Refunded',
+                  value: 'partially_refunded',
+                },
+              ],
+            }
+          }
+          if (field.name === 'transactions') {
+            // Change label from 'Transactions' to 'Transaction ID' and add custom cell component
+            return {
+              ...field,
+              label: 'Transaction ID',
+              admin: {
+                ...field.admin,
+                components: {
+                  ...field.admin?.components,
+                  Cell: '@/components/admin/TransactionLinkCell#TransactionLinkCell',
+                },
+              },
+            }
+          }
+          return field
+        })
+
         return {
           ...defaultCollection,
-          fields: [...(defaultCollection.fields || []), ...(OrdersCollection.fields || [])],
+          fields: [...updatedFields, ...(OrdersCollection.fields || [])],
           hooks: {
             ...existingHooks,
             ...ordersCollectionHooks,
