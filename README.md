@@ -411,6 +411,28 @@ pnpm test:e2e
 3. **Admin Panel**: Changes to collections, fields, and globals are reflected immediately in the admin panel
 4. **Database**: Use `push: true` in development for automatic schema updates (never in production!)
 
+### Admin Panel Column Preferences
+
+The admin panel allows you to customize which columns are displayed in collection list views. These preferences are saved per user and persist across sessions.
+
+**How to Customize Columns:**
+
+1. Navigate to any collection in the admin panel (e.g., Orders, Products, Users)
+2. In the list view, click the column selector icon (usually in the top-right of the table)
+3. Select or deselect columns to show/hide them
+4. Reorder columns by dragging them
+5. Your preferences are automatically saved to your user account
+
+**How It Works:**
+
+- **Default Columns**: Each collection has default columns defined in code (via `admin.defaultColumns` in collection config)
+- **User Preferences**: When you customize columns, your preferences are saved in the `payload-preferences` collection in the database
+- **Persistence**: Your column preferences are linked to your user account and will persist after page refreshes
+- **Per User**: Each admin user can have their own column preferences for each collection
+- **URL State**: Column state is also stored in the URL, allowing you to share specific column configurations via direct links
+
+**Note**: You don't need to modify code to change columns - all customization is done through the admin panel UI. The `defaultColumns` setting in code only determines the initial columns shown to new users or when preferences are reset.
+
 ## Production
 
 ### Building for Production

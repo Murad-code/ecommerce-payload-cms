@@ -16,6 +16,7 @@ import { customerOnlyFieldAccess } from '@/access/customerOnlyFieldAccess'
 import { OrdersCollection } from '@/collections/Orders'
 import { sendOrderConfirmationEmail } from '@/collections/Orders/hooks/sendOrderConfirmationEmail'
 import { ProductsCollection } from '@/collections/Products'
+import { TransactionsCollection } from '@/collections/Transactions'
 import { Page, Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 
@@ -153,6 +154,46 @@ export const plugins: Plugin[] = [
               ...existingAfterChange,
               ...ordersCollectionAfterChange,
               sendOrderConfirmationEmail,
+            ],
+          },
+        }
+      },
+    },
+    transactions: {
+      transactionsCollectionOverride: ({ defaultCollection }) => {
+        // Merge hooks from TransactionsCollection with the default collection
+        const existingHooks = defaultCollection.hooks || {}
+
+        const transactionsCollectionHooks = TransactionsCollection.hooks || {}
+
+        return {
+          ...defaultCollection,
+          hooks: {
+            ...existingHooks,
+            ...transactionsCollectionHooks,
+            beforeChange: [
+              ...(Array.isArray(existingHooks.beforeChange)
+                ? existingHooks.beforeChange
+                : existingHooks.beforeChange
+                  ? [existingHooks.beforeChange]
+                  : []),
+              ...(Array.isArray(transactionsCollectionHooks.beforeChange)
+                ? transactionsCollectionHooks.beforeChange
+                : transactionsCollectionHooks.beforeChange
+                  ? [transactionsCollectionHooks.beforeChange]
+                  : []),
+            ],
+            afterRead: [
+              ...(Array.isArray(existingHooks.afterRead)
+                ? existingHooks.afterRead
+                : existingHooks.afterRead
+                  ? [existingHooks.afterRead]
+                  : []),
+              ...(Array.isArray(transactionsCollectionHooks.afterRead)
+                ? transactionsCollectionHooks.afterRead
+                : transactionsCollectionHooks.afterRead
+                  ? [transactionsCollectionHooks.afterRead]
+                  : []),
             ],
           },
         }

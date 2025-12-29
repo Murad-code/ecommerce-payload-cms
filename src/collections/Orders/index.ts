@@ -1,11 +1,15 @@
-import type { CollectionConfig } from 'payload'
-import type { Order } from '@/payload-types'
 import { adminOnlyFieldAccess } from '@/access/adminOnlyFieldAccess'
-import { sendOrderConfirmationEmail } from './hooks/sendOrderConfirmationEmail'
+import type { CollectionConfig } from 'payload'
 import { autoPopulateAdminNotes } from './hooks/autoPopulateAdminNotes'
+import {
+  autoPopulateCustomerEmail,
+  populateCustomerEmailOnRead,
+} from './hooks/autoPopulateCustomerEmail'
 import { populateAdminNotes } from './hooks/populateAdminNotes'
+import { sendOrderConfirmationEmail } from './hooks/sendOrderConfirmationEmail'
+import { validateCustomerEmail } from './hooks/validateCustomerEmail'
 
-export const OrdersCollection: CollectionConfig<Order> = {
+export const OrdersCollection: CollectionConfig = {
   slug: 'orders',
   fields: [
     {
@@ -67,9 +71,8 @@ export const OrdersCollection: CollectionConfig<Order> = {
     },
   ],
   hooks: {
-    beforeChange: [autoPopulateAdminNotes],
-    afterRead: [populateAdminNotes],
+    beforeChange: [autoPopulateCustomerEmail, validateCustomerEmail, autoPopulateAdminNotes],
+    afterRead: [populateCustomerEmailOnRead, populateAdminNotes],
     afterChange: [sendOrderConfirmationEmail],
   },
 }
-
