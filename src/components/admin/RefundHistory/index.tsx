@@ -19,6 +19,7 @@ type Props = {
 export const RefundHistory: React.FC<Props> = (props) => {
   const [refunds, setRefunds] = useState<Refund[]>([])
   const [orderId, setOrderId] = useState<number | undefined>()
+  const [totalRefunded, setTotalRefunded] = useState<number>(0)
 
   useEffect(() => {
     // Get data from field context or direct props
@@ -27,20 +28,27 @@ export const RefundHistory: React.FC<Props> = (props) => {
       const orderRefunds = doc.refunds || []
       setRefunds(Array.isArray(orderRefunds) ? orderRefunds : [])
       setOrderId(doc.id)
+      setTotalRefunded(doc.totalRefunded || 0)
     } else if (props.refunds) {
       setRefunds(props.refunds)
       setOrderId(props.orderId)
     }
   }, [props.field, props.value, props.refunds, props.orderId])
 
-  if (!refunds || refunds.length === 0) {
-    return (
-      <div className="p-4 border border-border rounded">
-        <h3 className="mt-0 mb-2">Refund History</h3>
-        <p className="text-muted-foreground text-sm">No refunds for this order</p>
-      </div>
-    )
+  // Show component if there are refunds OR totalRefunded > 0
+  // (condition in collection config also checks status === 'refunded')
+  if ((!refunds || refunds.length === 0) && totalRefunded <= 0) {
+    return null // Don't render anything if no refunds and no totalRefunded
   }
+
+  // Format totalRefunded from pence to GBP
+  const totalRefundedInPounds = totalRefunded / 100
+  const formattedTotalRefunded = new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(totalRefundedInPounds)
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -58,8 +66,25 @@ export const RefundHistory: React.FC<Props> = (props) => {
   return (
     <div className="p-4 border border-border rounded">
       <h3 className="mt-0 mb-4">Refund History</h3>
-      <div className="flex flex-col gap-3">
-        {refunds.map((refund) => {
+      
+      {/* Total Refunded Summary */}
+      <div className="mb-4 p-3 bg-muted/50 border border-border rounded">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground mb-1">Total Refunded</p>
+            <p className="text-2xl font-semibold">{formattedTotalRefunded}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-medium text-muted-foreground mb-1">Total Refunds</p>
+            <p className="text-2xl font-semibold">{refunds.length}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Refunds List */}
+      {refunds && refunds.length > 0 ? (
+        <div className="flex flex-col gap-3">
+          {refunds.map((refund) => {
           const refundId = typeof refund === 'object' ? refund.id : refund
           const refundData = typeof refund === 'object' ? refund : null
 
@@ -130,7 +155,14 @@ export const RefundHistory: React.FC<Props> = (props) => {
             </div>
           )
         })}
-      </div>
+        </div>
+      ) : (
+        <div className="p-3 bg-muted/30 border border-border rounded">
+          <p className="text-sm text-muted-foreground">
+            No refund records found, but total refunded amount is {formattedTotalRefunded}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

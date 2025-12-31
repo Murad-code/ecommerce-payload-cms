@@ -105,3 +105,4 @@ export const populateCustomerEmailOnRead: CollectionAfterReadHook<Transaction> =
   return doc
 }
 
+

@@ -26,3 +26,4 @@ export const validateCustomerEmail: CollectionBeforeChangeHook<Transaction> = as
   return data
 }
 
+

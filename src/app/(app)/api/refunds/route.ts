@@ -3,6 +3,14 @@ import configPromise from '@payload-config'
 import { headers as getHeaders } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { checkRole } from '@/access/utilities'
+import { REST_POST } from '@payloadcms/next/routes'
+
+/**
+ * POST /api/refunds
+ * Create refund (delegates to Payload's default collection endpoint)
+ * This allows the admin UI to create refunds while we have a custom GET handler
+ */
+export const POST = REST_POST(configPromise)
 
 /**
  * GET /api/refunds
