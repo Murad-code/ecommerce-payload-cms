@@ -281,7 +281,7 @@ export interface Order {
       }[]
     | null;
   /**
-   * Total amount refunded for this order (in smallest currency unit)
+   * Total amount refunded for this order (stored in pence, displayed in GBP)
    */
   totalRefunded?: number | null;
   /**
@@ -993,7 +993,7 @@ export interface Cart {
   createdAt: string;
 }
 /**
- * Processed refunds - audit trail of all refund transactions. To create a refund, use the refund buttons on the order detail page.
+ * Processed refunds - audit trail of all refund transactions
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "refunds".
@@ -1001,69 +1001,112 @@ export interface Cart {
 export interface Refund {
   id: number;
   /**
-   * ⚠️ Select the order to refund. The transaction will be automatically selected from this order to prevent errors.
+   * 🔍 Search by Order ID (type "123" to find Order #123). Once an order is selected, the transaction, amount, currency, and payment intent will be automatically populated.
    */
   order: number | Order;
-  /**
-   * ✅ Transaction is automatically selected from the order above. This prevents refunding the wrong customer.
-   */
-  transaction?: (number | null) | Transaction;
-  /**
-   * Refund amount in smallest currency unit (e.g., pence for GBP)
-   */
-  amount: number;
   currency: 'GBP';
   /**
    * Whether this is a full or partial refund
    */
   type: 'full' | 'partial';
   /**
-   * Current status of the refund
+   * Refund amount in GBP pounds (e.g., 10.50 for £10.50). For full refunds, this is automatically calculated and read-only.
    */
-  status: 'processing' | 'completed' | 'failed';
-  /**
-   * Stripe refund ID returned from Stripe API
-   */
-  stripeRefundId?: string | null;
-  /**
-   * Original Stripe charge ID
-   */
-  stripeChargeId?: string | null;
-  /**
-   * Payment intent ID from the transaction
-   */
-  paymentIntentId: string;
+  amount?: number | null;
   /**
    * Reason for the refund (optional)
    */
   reason?: string | null;
   /**
-   * Admin who processed this refund
+   * Technical information (automatically populated). Click to expand.
    */
-  processedBy?: (number | null) | User;
-  /**
-   * When the refund was processed
-   */
-  processedAt?: string | null;
-  /**
-   * Items being refunded (for partial refunds)
-   */
-  items?:
-    | {
-        product: number | Product;
-        variant?: (number | null) | Variant;
-        quantity: number;
-        /**
-         * Refund amount for this item
-         */
-        amount: number;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * The original refund request (if this refund was processed from a customer request)
-   */
-  refundRequest?: (number | null) | RefundRequest;
+  technicalDetails: {
+    /**
+     * ✅ Transaction is automatically selected from the order above. This prevents refunding the wrong customer.
+     */
+    transaction: number | Transaction;
+    /**
+     * Payment Intent ID from the transaction. This is created when the customer initiates payment. The actual charge (stripeChargeId) is created when payment is captured.
+     */
+    paymentIntentId: string;
+    /**
+     * Stripe refund ID returned from Stripe API
+     */
+    stripeRefundId?: string | null;
+    /**
+     * Original Stripe charge ID (the charge that was refunded). This is different from Payment Intent ID - a Payment Intent can have multiple charges, but a refund is always tied to a specific charge.
+     */
+    stripeChargeId?: string | null;
+    /**
+     * Admin who processed this refund
+     */
+    processedBy?: (number | null) | User;
+    /**
+     * When the refund was processed
+     */
+    processedAt?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "addresses".
+ */
+export interface Address {
+  id: number;
+  customer?: (number | null) | User;
+  title?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  company?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  country:
+    | 'US'
+    | 'GB'
+    | 'CA'
+    | 'AU'
+    | 'AT'
+    | 'BE'
+    | 'BR'
+    | 'BG'
+    | 'CY'
+    | 'CZ'
+    | 'DK'
+    | 'EE'
+    | 'FI'
+    | 'FR'
+    | 'DE'
+    | 'GR'
+    | 'HK'
+    | 'HU'
+    | 'IN'
+    | 'IE'
+    | 'IT'
+    | 'JP'
+    | 'LV'
+    | 'LT'
+    | 'LU'
+    | 'MY'
+    | 'MT'
+    | 'MX'
+    | 'NL'
+    | 'NZ'
+    | 'NO'
+    | 'PL'
+    | 'PT'
+    | 'RO'
+    | 'SG'
+    | 'SK'
+    | 'SI'
+    | 'ES'
+    | 'SE'
+    | 'CH';
+  phone?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1146,67 +1189,6 @@ export interface RefundRequest {
    * The processed refund (if this request was approved and processed)
    */
   refund?: (number | null) | Refund;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "addresses".
- */
-export interface Address {
-  id: number;
-  customer?: (number | null) | User;
-  title?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  company?: string | null;
-  addressLine1?: string | null;
-  addressLine2?: string | null;
-  city?: string | null;
-  state?: string | null;
-  postalCode?: string | null;
-  country:
-    | 'US'
-    | 'GB'
-    | 'CA'
-    | 'AU'
-    | 'AT'
-    | 'BE'
-    | 'BR'
-    | 'BG'
-    | 'CY'
-    | 'CZ'
-    | 'DK'
-    | 'EE'
-    | 'FI'
-    | 'FR'
-    | 'DE'
-    | 'GR'
-    | 'HK'
-    | 'HU'
-    | 'IN'
-    | 'IE'
-    | 'IT'
-    | 'JP'
-    | 'LV'
-    | 'LT'
-    | 'LU'
-    | 'MY'
-    | 'MT'
-    | 'MX'
-    | 'NL'
-    | 'NZ'
-    | 'NO'
-    | 'PL'
-    | 'PT'
-    | 'RO'
-    | 'SG'
-    | 'SK'
-    | 'SI'
-    | 'ES'
-    | 'SE'
-    | 'CH';
-  phone?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1623,27 +1605,20 @@ export interface RefundRequestsSelect<T extends boolean = true> {
  */
 export interface RefundsSelect<T extends boolean = true> {
   order?: T;
-  transaction?: T;
-  amount?: T;
   currency?: T;
   type?: T;
-  status?: T;
-  stripeRefundId?: T;
-  stripeChargeId?: T;
-  paymentIntentId?: T;
+  amount?: T;
   reason?: T;
-  processedBy?: T;
-  processedAt?: T;
-  items?:
+  technicalDetails?:
     | T
     | {
-        product?: T;
-        variant?: T;
-        quantity?: T;
-        amount?: T;
-        id?: T;
+        transaction?: T;
+        paymentIntentId?: T;
+        stripeRefundId?: T;
+        stripeChargeId?: T;
+        processedBy?: T;
+        processedAt?: T;
       };
-  refundRequest?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -96,19 +96,21 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create refund record
+    // Create refund record (only if Stripe succeeded)
+    // The beforeChange hook will process Stripe, so we create with the Stripe data already set
     const refund = await payload.create({
       collection: 'refunds',
       data: {
         order: orderId,
-        transaction: transaction.id,
         amount: refundAmount,
         type: refundType,
-        status: stripeRefund.status === 'succeeded' ? 'completed' : 'processing',
-        stripeRefundId: stripeRefund.id,
-        stripeChargeId: stripeRefund.charge as string,
-        paymentIntentId,
         reason: reason || undefined,
+        technicalDetails: {
+          transaction: transaction.id,
+          paymentIntentId,
+          stripeRefundId: stripeRefund.id,
+          stripeChargeId: stripeRefund.charge as string,
+        },
         refundRequest: refundRequestId || undefined,
       },
       user,

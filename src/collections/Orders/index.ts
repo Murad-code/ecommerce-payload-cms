@@ -74,8 +74,11 @@ export const OrdersCollection: CollectionConfig = {
       type: 'number',
       defaultValue: 0,
       admin: {
-        description: 'Total amount refunded for this order (in smallest currency unit)',
+        description: 'Total amount refunded for this order (stored in pence, displayed in GBP)',
         readOnly: true,
+        components: {
+          Field: '@/components/admin/TotalRefundedField#TotalRefundedField',
+        },
       },
     },
     {
@@ -98,23 +101,7 @@ export const OrdersCollection: CollectionConfig = {
         },
         condition: (data) => {
           // Only show if order can be refunded
-          return (
-            data?.status === 'completed' ||
-            data?.status === 'partially_refunded'
-          )
-        },
-      },
-    },
-    {
-      name: 'refundHistory',
-      type: 'ui',
-      admin: {
-        components: {
-          Field: '@/components/admin/RefundHistory#RefundHistory',
-        },
-        condition: (data) => {
-          // Only show if there are refunds
-          return data?.refunds && Array.isArray(data.refunds) && data.refunds.length > 0
+          return data?.status === 'completed' || data?.status === 'partially_refunded'
         },
       },
     },

@@ -9,7 +9,7 @@ const getStripeClient = (): Stripe => {
     throw new Error('STRIPE_SECRET_KEY is not configured')
   }
   return new Stripe(secretKey, {
-    apiVersion: '2024-12-18.acacia',
+    apiVersion: '2025-08-27.basil',
   })
 }
 
@@ -34,6 +34,16 @@ export async function processFullRefund(
     return refund
   } catch (error) {
     if (error instanceof Stripe.errors.StripeError) {
+      // Check if this is an "already refunded" error
+      const errorMessage = error.message || ''
+      if (
+        errorMessage.toLowerCase().includes('already been refunded') ||
+        errorMessage.toLowerCase().includes('already refunded')
+      ) {
+        throw new Error(
+          'This order has already been fully refunded. Please check the order status and refund history.',
+        )
+      }
       throw new Error(`Stripe refund error: ${error.message}`)
     }
     throw error
@@ -68,6 +78,16 @@ export async function processPartialRefund(
     return refund
   } catch (error) {
     if (error instanceof Stripe.errors.StripeError) {
+      // Check if this is an "already refunded" error
+      const errorMessage = error.message || ''
+      if (
+        errorMessage.toLowerCase().includes('already been refunded') ||
+        errorMessage.toLowerCase().includes('already refunded')
+      ) {
+        throw new Error(
+          'This order has already been fully refunded. Please check the order status and refund history.',
+        )
+      }
       throw new Error(`Stripe refund error: ${error.message}`)
     }
     throw error

@@ -120,21 +120,35 @@ export const plugins: Plugin[] = [
             ? [ordersCollectionHooks.afterChange]
             : []
 
-        // Override status field to include 'partially_refunded'
+        // Override status field to include 'partially_refunded' and 'refunded'
         // Override transactions field label to 'Transaction ID'
         const defaultFields = defaultCollection.fields || []
         const updatedFields = defaultFields.map((field: any) => {
           if (field.name === 'status' && field.type === 'select') {
-            // Add 'partially_refunded' option to status field
+            // Add 'partially_refunded' and 'refunded' options to status field
+            const existingOptions = field.options || []
+            const hasPartiallyRefunded = existingOptions.some(
+              (opt: any) => opt.value === 'partially_refunded',
+            )
+            const hasRefunded = existingOptions.some((opt: any) => opt.value === 'refunded')
+
+            const newOptions = [...existingOptions]
+            if (!hasPartiallyRefunded) {
+              newOptions.push({
+                label: 'Partially Refunded',
+                value: 'partially_refunded',
+              })
+            }
+            if (!hasRefunded) {
+              newOptions.push({
+                label: 'Refunded',
+                value: 'refunded',
+              })
+            }
+
             return {
               ...field,
-              options: [
-                ...(field.options || []),
-                {
-                  label: 'Partially Refunded',
-                  value: 'partially_refunded',
-                },
-              ],
+              options: newOptions,
             }
           }
           if (field.name === 'transactions') {
@@ -156,6 +170,11 @@ export const plugins: Plugin[] = [
 
         return {
           ...defaultCollection,
+          admin: {
+            ...defaultCollection.admin,
+            // Set useAsTitle to 'id' so relationship fields show Order ID instead of date
+            useAsTitle: 'id',
+          },
           fields: [...updatedFields, ...(OrdersCollection.fields || [])],
           hooks: {
             ...existingHooks,

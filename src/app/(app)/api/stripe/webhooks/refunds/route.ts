@@ -56,13 +56,22 @@ export async function POST(request: Request) {
       case 'refund.updated': {
         const refund = event.data.object as Stripe.Refund
 
-        // Find refund record by Stripe refund ID
+        // Find refund record by Stripe refund ID (check both root level and technicalDetails)
         const refunds = await payload.find({
           collection: 'refunds',
           where: {
-            stripeRefundId: {
-              equals: refund.id,
-            },
+            or: [
+              {
+                'technicalDetails.stripeRefundId': {
+                  equals: refund.id,
+                },
+              },
+              {
+                stripeRefundId: {
+                  equals: refund.id,
+                },
+              },
+            ],
           },
           limit: 1,
         })
@@ -76,29 +85,47 @@ export async function POST(request: Request) {
 
         const refundRecord = refunds.docs[0]
 
-        // Update refund status based on Stripe status
-        let newStatus: 'processing' | 'completed' | 'failed' = 'processing'
-        if (refund.status === 'succeeded') {
-          newStatus = 'completed'
-        } else if (refund.status === 'failed' || refund.status === 'canceled') {
-          newStatus = 'failed'
+        // Prepare update data - ensure stripeRefundId and stripeChargeId are set
+        // (Refunds are now only created if Stripe succeeds, so we just ensure technical details are complete)
+        const updateData: {
+          technicalDetails?: {
+            stripeRefundId?: string
+            stripeChargeId?: string
+          }
+        } = {}
+
+        // Check if technicalDetails exists, initialize if needed
+        const technicalDetails = (refundRecord as any).technicalDetails || {}
+        let needsTechnicalUpdate = false
+
+        // Update stripeRefundId if missing (edge case: refund created outside system)
+        if (!technicalDetails.stripeRefundId && !(refundRecord as any).stripeRefundId && refund.id) {
+          technicalDetails.stripeRefundId = refund.id
+          needsTechnicalUpdate = true
         }
 
-        // Update refund record
-        await payload.update({
-          collection: 'refunds',
-          id: refundRecord.id,
-          data: {
-            status: newStatus,
-          },
-        })
+        // Update stripeChargeId if missing and available from refund object
+        if (!technicalDetails.stripeChargeId && !(refundRecord as any).stripeChargeId && refund.charge) {
+          technicalDetails.stripeChargeId =
+            typeof refund.charge === 'string' ? refund.charge : refund.charge.id
+          needsTechnicalUpdate = true
+        }
 
-        payload.logger?.info(
-          `✅ Updated refund ${refundRecord.id} status to ${newStatus} from Stripe webhook`,
-        )
+        if (needsTechnicalUpdate) {
+          updateData.technicalDetails = technicalDetails
+          // Update refund record if needed
+          await payload.update({
+            collection: 'refunds',
+            id: refundRecord.id,
+            data: updateData,
+          })
+          payload.logger?.info(
+            `✅ Updated refund ${refundRecord.id} technical details from Stripe webhook`,
+          )
+        }
 
-        // If refund is completed, ensure order status is updated
-        if (newStatus === 'completed') {
+        // Ensure order status is updated if refund succeeded
+        if (refund.status === 'succeeded') {
           const orderId =
             typeof refundRecord.order === 'object'
               ? refundRecord.order.id

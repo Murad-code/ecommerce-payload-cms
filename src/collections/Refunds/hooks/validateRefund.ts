@@ -50,12 +50,21 @@ export const validateRefund: CollectionBeforeChangeHook<Refund> = async ({
     throw new Error(transactionValidation.error)
   }
 
+  // Initialize technicalDetails group if it doesn't exist
+  if (!(data as any).technicalDetails) {
+    ;(data as any).technicalDetails = {}
+  }
+
   // Always auto-populate transaction from order (prevent manual selection errors)
-  data.transaction = transaction.id
+  const technicalDetails = (data as any).technicalDetails
+  technicalDetails.transaction = transaction.id
+  // Also set at root level for backward compatibility
+  ;(data as any).transaction = transaction.id
 
   // Validate that manually selected transaction (if any) belongs to the order
-  if (data.transaction && typeof data.transaction === 'number') {
-    const selectedTransactionId = data.transaction
+  const currentTransaction = technicalDetails.transaction || (data as any).transaction
+  if (currentTransaction && typeof currentTransaction === 'number') {
+    const selectedTransactionId = currentTransaction
     const orderTransactionIds = order.transactions
       ?.map((tx) => (typeof tx === 'object' ? tx.id : tx))
       .filter(Boolean) || []
@@ -68,14 +77,62 @@ export const validateRefund: CollectionBeforeChangeHook<Refund> = async ({
   }
 
   // Set payment intent ID from transaction
-  if (!data.paymentIntentId && transaction.stripe?.paymentIntentID) {
-    data.paymentIntentId = transaction.stripe.paymentIntentID
+  if (!technicalDetails.paymentIntentId && !(data as any).paymentIntentId && transaction.stripe?.paymentIntentID) {
+    technicalDetails.paymentIntentId = transaction.stripe.paymentIntentID
+    // Also set at root level for backward compatibility
+    ;(data as any).paymentIntentId = transaction.stripe.paymentIntentID
+  }
+
+  // Check for existing refunds for this order to prevent duplicates
+  // Since refunds are only created if Stripe succeeds, any refund with stripeRefundId is valid
+  // This prevents duplicate refund attempts if the form is submitted twice
+  const existingRefunds = await req.payload.find({
+    collection: 'refunds',
+    where: {
+      and: [
+        {
+          order: {
+            equals: orderId,
+          },
+        },
+        {
+          'technicalDetails.stripeRefundId': {
+            exists: true,
+          },
+        },
+      ],
+    },
+    limit: 1,
+  })
+
+  if (existingRefunds.docs.length > 0) {
+    const existingRefund = existingRefunds.docs[0]
+    const existingStripeRefundId =
+      (existingRefund.technicalDetails as any)?.stripeRefundId ||
+      (existingRefund as any).stripeRefundId
+
+    if (existingStripeRefundId) {
+      throw new Error(
+        `A refund for this order already exists (Refund #${existingRefund.id}). Please check the refunds list instead of creating a new one.`,
+      )
+    }
   }
 
   // Validate refund amount
+  const orderAmount = order.amount || 0
+  const totalRefunded = order.totalRefunded || 0
+  const refundableAmount = orderAmount - totalRefunded
+
+  // Check if there's anything left to refund
+  if (refundableAmount <= 0) {
+    throw new Error(
+      `This order has already been fully refunded. Total refunded: £${(totalRefunded / 100).toFixed(2)} of £${(orderAmount / 100).toFixed(2)}`,
+    )
+  }
+
   const amountValidation = validateRefundAmount(
-    order.amount,
-    order.totalRefunded || 0,
+    orderAmount,
+    totalRefunded,
     data.amount,
   )
   if (!amountValidation.valid) {

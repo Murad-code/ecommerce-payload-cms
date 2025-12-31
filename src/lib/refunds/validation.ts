@@ -81,7 +81,17 @@ export function validateOrderCanBeRefunded(order: Order): ValidationResult {
   if (order.status === 'refunded') {
     return {
       valid: false,
-      error: 'Order has already been fully refunded',
+      error: 'This order has already been fully refunded',
+    }
+  }
+
+  // Check if order is already fully refunded by amount (even if status hasn't updated)
+  const orderAmount = order.amount || 0
+  const totalRefunded = order.totalRefunded || 0
+  if (orderAmount > 0 && totalRefunded >= orderAmount) {
+    return {
+      valid: false,
+      error: `This order has already been fully refunded. Total refunded: £${(totalRefunded / 100).toFixed(2)} of £${(orderAmount / 100).toFixed(2)}`,
     }
   }
 
